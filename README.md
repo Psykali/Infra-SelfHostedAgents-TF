@@ -31,3 +31,22 @@ runcmd:
    ```bash
    git clone <your-repo>
    cd azure-devops-agent-vm
+
+
+
+## **Deployment Workflow**
+
+1. **Terraform** creates the VM infrastructure
+2. **Cloud-init** installs basic prerequisites during VM creation
+3. **Bash scripts** complete the agent setup
+4. **Systemd** ensures agents auto-start on boot
+
+## **Key Features:**
+
+- ✅ **Modular design** - each script has a single responsibility
+- ✅ **Configurable** - easily adjust agent count, VM size, etc.
+- ✅ **Idempotent** - scripts can be run multiple times safely
+- ✅ **Automated** - minimal manual intervention required
+- ✅ **Production-ready** - includes proper error handling and logging
+
+This solution provides a complete, reusable pipeline for deploying Azure DevOps agent pools! 🚀
