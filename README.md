@@ -1,4 +1,6 @@
-Repo to create devops hosted pool on azure and add them to a agent pool on azure devops
+# Azure DevOps Agent VM Provisioning
+
+Complete solution for provisioning Azure VMs with Azure DevOps agents.
 
 #cloud-config
 package_update: true
@@ -23,3 +25,9 @@ runcmd:
       sudo -u devopsagent tar -zxvf /opt/azure-devops-agents/vsts-agent-linux-x64-3.227.2.tar.gz -C /opt/azure-devops-agents/agent-$i
       sudo -u devopsagent chmod +x /opt/azure-devops-agents/agent-$i/*.sh
     done
+
+
+**Clone the repository**
+   ```bash
+   git clone <your-repo>
+   cd azure-devops-agent-vm
