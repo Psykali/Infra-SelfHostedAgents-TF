@@ -71,7 +71,8 @@ resource "azurerm_virtual_machine_extension" "agent_setup" {
     "script": "${base64encode(file("${path.module}/../../scripts/setup_agent.sh"))}"
   })
 
-  protected_settings = jsonencode({
-    "commandToExecute": "echo 'Script will be executed on VM startup'"
-  })
+  tags = {
+    Environment = "prod"
+    Client      = var.client_name
+  }
 }
