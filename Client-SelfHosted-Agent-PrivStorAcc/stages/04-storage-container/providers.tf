@@ -7,11 +7,8 @@ terraform {
     }
   }
 
-  backend "azurerm" {
-    resource_group_name  = "BSE-${var.client_name}-RG-${var.location}-001"
-    storage_account_name = var.storage_account_name
-    container_name       = "tfstate"
-    key                  = "stage4-container.tfstate"
+  backend "local" {
+    path = "terraform-stage4.tfstate"
   }
 }
 
