@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "tfstate" {
-  name                     = lower(replace("bse${var.client_name}st${var.location}001", "-", ""))
+  name                     = "bseclientstfr001"
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = var.location
   account_tier             = "Standard"
