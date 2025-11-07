@@ -5,6 +5,14 @@ terraform {
       source  = "microsoft/azuredevops"
       version = ">= 0.1.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
 
   backend "local" {
@@ -15,3 +23,6 @@ terraform {
 provider "azuredevops" {
   org_service_url = "https://dev.azure.com/${var.ado_organization}"
 }
+
+provider "null" {}
+provider "local" {}
