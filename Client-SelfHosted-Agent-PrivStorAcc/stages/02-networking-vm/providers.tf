@@ -7,11 +7,8 @@ terraform {
     }
   }
 
-  backend "azurerm" {
-    resource_group_name  = "BSE-CLIENT-RG-FRANCE-CENTRAL-001"
-    storage_account_name = "bseclientstfrancecentral001"
-    container_name       = "tfstate"
-    key                  = "networking-vm.tfstate"
+  backend "local" {
+    path = "terraform-stage2.tfstate"
   }
 }
 
