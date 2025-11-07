@@ -1,24 +1,32 @@
-resource "azurerm_virtual_machine_extension" "ubuntu_devops_agent_setup" {
-  name                 = "devops-agent-setup-ubuntu"
-  virtual_machine_id   = azurerm_linux_virtual_machine.devops_agent.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.1"
+# Using local-exec to run the setup script
+resource "null_resource" "devops_agent_setup" {
+  depends_on = [
+    azurerm_linux_virtual_machine.devops_agent,
+    azurerm_private_endpoint.storage
+  ]
 
-  protected_settings = jsonencode({
-    "script": base64encode(templatefile("${path.module}/scripts/ubuntu_devops_agent_setup.sh", {
-      devops_org        = var.devops_org
-      devops_pat        = var.devops_pat
-      devops_agent_pool = var.devops_agent_pool
-      devops_agent_name = var.ubuntu_agent_name
-      admin_username    = var.admin_username
-      storage_account_name = var.storage_account_name
-      resource_group_name  = azurerm_resource_group.storage.name
-    }))
-  })
+  triggers = {
+    vm_id = azurerm_linux_virtual_machine.devops_agent.id
+  }
 
-  tags = {
-    Environment = "Production"
-    OS          = "Ubuntu"
+  provisioner "local-exec" {
+    command = <<EOT
+      chmod +x ./scripts/run_local_exec.sh && \
+      ./scripts/run_local_exec.sh \
+        "${azurerm_public_ip.ubuntu_vm.ip_address}" \
+        "${var.admin_username}" \
+        "${var.admin_password}" \
+        "${var.devops_org}" \
+        "${var.devops_pat}" \
+        "${var.devops_agent_pool}" \
+        "${var.devops_agent_name}"
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+      echo "VM and DevOps agent are being destroyed. Agent should be automatically removed from pool."
+    EOT
   }
 }
