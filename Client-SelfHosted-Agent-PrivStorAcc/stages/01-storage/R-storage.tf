@@ -6,21 +6,18 @@ resource "azurerm_storage_account" "tfstate" {
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
 
+  # Allow public access initially for Terraform backend setup
   network_rules {
-    default_action             = "Deny"
+    default_action             = "Allow"
     ip_rules                   = []
     virtual_network_subnet_ids = []
   }
 
   tags = {
-    Environment = var.environment
+    Environment = "prod"
     Client      = var.client_name
     Purpose     = "terraform-state"
   }
 }
 
-resource "azurerm_storage_container" "tfstate" {
-  name                  = "tfstate"
-  storage_account_name  = azurerm_storage_account.tfstate.name
-  container_access_type = "private"
-}
+# Note: Container will be created in Stage 4 after private endpoint
