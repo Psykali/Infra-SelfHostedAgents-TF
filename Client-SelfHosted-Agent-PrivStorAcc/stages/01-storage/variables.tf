@@ -8,9 +8,3 @@ variable "location" {
   type        = string
   default     = "France Central"
 }
-
-variable "environment" {
-  description = "Environment (dev, prod, etc)"
-  type        = string
-  default     = "prod"
-}
