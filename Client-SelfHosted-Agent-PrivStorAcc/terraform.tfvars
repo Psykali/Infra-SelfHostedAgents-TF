@@ -11,6 +11,4 @@ vm_size         = "Standard_B2s"
 # Azure DevOps variables
 ado_organization = "bseforgedevops"
 ado_project      = "TestScripts-Forge"
-
-# Storage variables (for stage 1)
-storage_account_name = "bseclientstfrancecentral001"
+devops_admin_pat = "your-admin-pat-token"  # PAT with permissions to create resources
