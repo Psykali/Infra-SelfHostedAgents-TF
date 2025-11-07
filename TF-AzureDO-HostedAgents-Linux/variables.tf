@@ -1,7 +1,7 @@
 variable "location" {
   description = "Azure region where resources will be created"
   type        = string
-  default     = "francecentral"
+  default     = "France Central"
 }
 
 variable "hub_vnet_cidr" {
@@ -22,16 +22,34 @@ variable "vm_subnet_cidr" {
   default     = "10.1.1.0/24"
 }
 
-variable "vm_size" {
-  description = "Size of the virtual machine"
+variable "linux_vm_size" {
+  description = "Size of the Linux virtual machines"
   type        = string
   default     = "Standard_B2s"
 }
 
-variable "admin_username" {
-  description = "Admin username for the VM"
+variable "windows_vm_size" {
+  description = "Size of the Windows virtual machine"
   type        = string
-  default     = "ado-selfhostlin"
+  default     = "Standard_B2s"
+}
+
+variable "admin_username_linux" {
+  description = "Admin username for Linux VMs"
+  type        = string
+  default     = "azureuser"
+}
+
+variable "admin_username_windows" {
+  description = "Admin username for Windows VM"
+  type        = string
+  default     = "azureuser"
+}
+
+variable "admin_password_windows" {
+  description = "Admin password for Windows VM"
+  type        = string
+  sensitive   = true
 }
 
 variable "devops_org" {
@@ -51,8 +69,14 @@ variable "devops_agent_pool" {
   default     = "Default"
 }
 
-variable "devops_agent_name" {
-  description = "Name for the self-hosted agent"
+variable "linux_agent_names" {
+  description = "Names for the Linux self-hosted agents"
+  type        = list(string)
+  default     = ["ubuntu-agent-01", "ubuntu-agent-02"]
+}
+
+variable "windows_agent_name" {
+  description = "Name for the Windows self-hosted agent"
   type        = string
-  default     = "linux-agents-01"
+  default     = "windows-agent-01"
 }
