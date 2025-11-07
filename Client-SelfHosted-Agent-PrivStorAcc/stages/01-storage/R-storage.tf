@@ -6,10 +6,10 @@ resource "azurerm_storage_account" "tfstate" {
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
 
-  # Make it private from the beginning - no public access
+  # Allow deployment IP and AzureServices initially
   network_rules {
     default_action             = "Deny"
-    ip_rules                   = []
+    ip_rules                   = var.deployment_ip != "" ? [var.deployment_ip] : []
     virtual_network_subnet_ids = []
     
     # Allow Azure services to bypass the rules for backend setup
@@ -23,7 +23,6 @@ resource "azurerm_storage_account" "tfstate" {
   }
 }
 
-# Create the container immediately since we're using AzureServices bypass
 resource "azurerm_storage_container" "tfstate" {
   name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.tfstate.name
