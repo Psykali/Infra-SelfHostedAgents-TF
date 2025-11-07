@@ -15,3 +15,9 @@ variable "storage_account_name" {
   type        = string
   default     = "bseclientstfr001"
 }
+
+variable "deployment_ip" {
+  description = "IP address of the deployment agent to allow temporary access"
+  type        = string
+  default     = "98.66.233.160"
+}
