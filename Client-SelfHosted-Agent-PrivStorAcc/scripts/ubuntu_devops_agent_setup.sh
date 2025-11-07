@@ -1,32 +1,36 @@
 #!/bin/bash
 
+set -e
+
+# Variables
+DEVOPS_ORG="$1"
+DEVOPS_PAT="$2"
+AGENT_POOL="$3"
+AGENT_NAME="$4"
+
+echo "Starting DevOps agent setup for: $AGENT_NAME"
+
 # Update and upgrade system
 echo "Updating and upgrading system..."
-apt-get update
-apt-get upgrade -y
+sudo apt-get update
+sudo apt-get upgrade -y
 
 # Install required packages
 echo "Installing required packages..."
-apt-get install -y curl wget unzip apt-transport-https ca-certificates gnupg software-properties-common jq
+sudo apt-get install -y curl wget unzip apt-transport-https ca-certificates gnupg software-properties-common
 
 # Install Azure CLI
 echo "Installing Azure CLI..."
-curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-
-# Install Terraform (optional - for testing connectivity)
-echo "Installing Terraform..."
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-apt-get update && apt-get install -y terraform
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # Create devops agent user
 echo "Creating devops agent user..."
 if id "devopsagent" &>/dev/null; then
     echo "User devopsagent already exists"
 else
-    useradd -m -s /bin/bash devopsagent
-    usermod -aG sudo devopsagent
-    echo "devopsagent ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    sudo useradd -m -s /bin/bash devopsagent
+    sudo usermod -aG sudo devopsagent
+    echo "devopsagent ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
 fi
 
 # Switch to devopsagent user and setup agent
@@ -43,11 +47,11 @@ tar -zxvf vsts-agent-linux-x64-\$AGENT_VERSION.tar.gz
 
 echo "Configuring agent..."
 ./config.sh --unattended \
-  --url "https://dev.azure.com/${devops_org}" \
+  --url "https://dev.azure.com/$DEVOPS_ORG" \
   --auth pat \
-  --token "${devops_pat}" \
-  --pool "${devops_agent_pool}" \
-  --agent "${devops_agent_name}" \
+  --token "$DEVOPS_PAT" \
+  --pool "$AGENT_POOL" \
+  --agent "$AGENT_NAME" \
   --replace \
   --acceptTeeEula
 
@@ -56,9 +60,9 @@ sudo ./svc.sh install devopsagent
 EOF
 
 # Create the systemd service file
-cat << EOF > /etc/systemd/system/azure-devops-agent-${devops_agent_name}.service
+sudo tee /etc/systemd/system/azure-devops-agent-$AGENT_NAME.service > /dev/null << EOF
 [Unit]
-Description=Azure DevOps Agent ${devops_agent_name}
+Description=Azure DevOps Agent $AGENT_NAME
 After=network.target
 
 [Service]
@@ -76,23 +80,9 @@ EOF
 
 # Enable and start the service
 echo "Enabling and starting Azure DevOps agent service..."
-systemctl daemon-reload
-systemctl enable azure-devops-agent-${devops_agent_name}.service
-systemctl start azure-devops-agent-${devops_agent_name}.service
+sudo systemctl daemon-reload
+sudo systemctl enable azure-devops-agent-$AGENT_NAME.service
+sudo systemctl start azure-devops-agent-$AGENT_NAME.service
 
-# Test storage account connectivity from the VM
-echo "Testing storage account connectivity..."
-echo "Storage Account: ${storage_account_name}"
-echo "Resource Group: ${resource_group_name}"
-
-# Test if we can access the storage account via private endpoint
-echo "Testing private endpoint connectivity..."
-if az storage container list --account-name ${storage_account_name} --auth-mode login > /dev/null 2>&1; then
-    echo "SUCCESS: Storage account is accessible via private endpoint"
-else
-    echo "WARNING: Cannot access storage account directly. This is expected if private endpoint is not configured for this VM."
-    echo "The private endpoint configuration allows the self-hosted agent to access the storage account internally."
-fi
-
-echo "Azure DevOps agent setup completed successfully for ${devops_agent_name}!"
-echo "Private storage account ${storage_account_name} is configured for Terraform state management"
+echo "Azure DevOps agent setup completed successfully for $AGENT_NAME!"
+echo "Agent $AGENT_NAME is now running and connected to Azure DevOps"
