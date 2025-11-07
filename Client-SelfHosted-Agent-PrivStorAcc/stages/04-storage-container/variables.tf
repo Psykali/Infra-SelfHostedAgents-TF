@@ -13,5 +13,5 @@ variable "location" {
 variable "storage_account_name" {
   description = "Storage account name"
   type        = string
-  default     = "bseclientstfrancecentral001"
+  default     = "bseclientstfr001"
 }
