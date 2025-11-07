@@ -22,8 +22,8 @@ variable "vm_subnet_cidr" {
   default     = "10.1.1.0/24"
 }
 
-variable "linux_vm_size" {
-  description = "Size of the Linux virtual machines"
+variable "ubuntu_vm_size" {
+  description = "Size of the Ubuntu virtual machines"
   type        = string
   default     = "Standard_B2s"
 }
@@ -34,20 +34,14 @@ variable "windows_vm_size" {
   default     = "Standard_B2s"
 }
 
-variable "admin_username_linux" {
-  description = "Admin username for Linux VMs"
+variable "admin_username" {
+  description = "Admin username for all VMs"
   type        = string
   default     = "azureuser"
 }
 
-variable "admin_username_windows" {
-  description = "Admin username for Windows VM"
-  type        = string
-  default     = "azureuser"
-}
-
-variable "admin_password_windows" {
-  description = "Admin password for Windows VM"
+variable "admin_password" {
+  description = "Admin password for all VMs"
   type        = string
   sensitive   = true
 }
@@ -69,8 +63,8 @@ variable "devops_agent_pool" {
   default     = "Default"
 }
 
-variable "linux_agent_names" {
-  description = "Names for the Linux self-hosted agents"
+variable "ubuntu_agent_names" {
+  description = "Names for the Ubuntu self-hosted agents"
   type        = list(string)
   default     = ["ubuntu-agent-01", "ubuntu-agent-02"]
 }
