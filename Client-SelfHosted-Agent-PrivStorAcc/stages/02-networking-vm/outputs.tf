@@ -5,7 +5,3 @@ output "vm_public_ip" {
 output "vm_private_ip" {
   value = azurerm_network_interface.vm.private_ip_address
 }
-
-output "subnet_id" {
-  value = azurerm_subnet.private_endpoints.id
-}
