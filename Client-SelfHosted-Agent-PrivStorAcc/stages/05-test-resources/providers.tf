@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "azurerm" {
-    resource_group_name  = "BSE-${var.client_name}-RG-${var.location}-001"
+    resource_group_name  = "BSE-${var.client_name}-RG-001"
     storage_account_name = "bseclientstfr001"
     container_name       = "tfstate"
     key                  = "stage5-test.tfstate"
