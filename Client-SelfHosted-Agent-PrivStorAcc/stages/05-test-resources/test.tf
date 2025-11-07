@@ -1,10 +1,10 @@
 data "azurerm_storage_account" "tfstate" {
-  name                = "bse${var.client_name}st${var.location}001"
-  resource_group_name = "BSE-${var.client_name}-RG-${var.location}-001"
+  name                = "bseclientstfr001"
+  resource_group_name = "BSE-${var.client_name}-RG-001"
 }
 
 resource "azurerm_resource_group" "test" {
-  name     = "BSE-${var.client_name}-RG-TEST-${var.location}-001"
+  name     = "BSE-${var.client_name}-RG-TEST-001"
   location = var.location
   tags = {
     Environment = "test"
