@@ -59,6 +59,18 @@ resource "azurerm_linux_virtual_machine" "devops_agent" {
     Environment = "Production"
     Role        = "DevOps-Agent"
     OS          = "Ubuntu"
-    AgentName   = var.ubuntu_agent_name
+    AgentName   = var.devops_agent_name
   }
+}
+
+# Data sources for private endpoint
+data "azurerm_virtual_network" "spoke" {
+  name                = azurerm_virtual_network.spoke.name
+  resource_group_name = azurerm_resource_group.spoke_networking.name
+}
+
+data "azurerm_subnet" "vm" {
+  name                 = azurerm_subnet.vm.name
+  virtual_network_name = data.azurerm_virtual_network.spoke.name
+  resource_group_name  = azurerm_resource_group.spoke_networking.name
 }
