@@ -27,7 +27,7 @@ variable "vm_size" {
   default     = "Standard_B2s"
 }
 
-variable "storage_account_name" {
-  description = "Storage account name for private endpoint"
+variable "storage_account_id" {
+  description = "Storage account ID for private endpoint"
   type        = string
 }
