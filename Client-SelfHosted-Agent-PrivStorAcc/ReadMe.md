@@ -1,8 +1,11 @@
-Client-SelfHosted-Agent-PrivStorAcc/
+Client-SelfHosted-Agent-PrivStorAcc//
 ├── providers.tf
-├── backend.tf
 ├── variables.tf
 ├── outputs.tf
+├── backend.tf
+├── scripts/
+│   ├── setup_devops_agent.sh
+│   └── run_local_exec.sh
 ├── networking/
 │   ├── hub_rg.tf
 │   ├── hub_vnet.tf
@@ -10,10 +13,6 @@ Client-SelfHosted-Agent-PrivStorAcc/
 │   ├── spoke_vnet.tf
 │   ├── vnet_peering.tf
 │   └── nsg.tf
-├── storage/
-│   ├── storage_rg.tf
-│   ├── storage_account.tf
-│   └── private_endpoint.tf
 ├── compute/
 │   ├── vm_rg.tf
 │   ├── ubuntu_vm.tf
@@ -22,3 +21,8 @@ Client-SelfHosted-Agent-PrivStorAcc/
 └── monitoring/
     ├── monitor_rg.tf
     └── diagnostics.tf
+└── state-storage/
+    ├── providers.tf
+    ├── variables.tf
+    ├── storage.tf
+    └── private-endpoint.tf
