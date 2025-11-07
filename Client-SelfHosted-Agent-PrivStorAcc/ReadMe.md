@@ -1,4 +1,4 @@
-Client-SelfHosted-Agent-PrivStorAcc//
+Client-SelfHosted-Agent-PrivStorAcc/
 ├── providers.tf
 ├── variables.tf
 ├── outputs.tf
