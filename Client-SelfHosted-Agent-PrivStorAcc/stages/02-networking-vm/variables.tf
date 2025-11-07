@@ -1,6 +1,7 @@
 variable "client_name" {
   description = "Name of the client"
   type        = string
+  default     = "client"
 }
 
 variable "location" {
@@ -19,6 +20,7 @@ variable "admin_password" {
   description = "Admin password for VM"
   type        = string
   sensitive   = true
+  default     = "YourSecurePassword123"
 }
 
 variable "vm_size" {
