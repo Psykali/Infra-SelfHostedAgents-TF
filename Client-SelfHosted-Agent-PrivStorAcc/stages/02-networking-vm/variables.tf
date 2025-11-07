@@ -28,8 +28,3 @@ variable "vm_size" {
   type        = string
   default     = "Standard_B2s"
 }
-
-variable "storage_account_id" {
-  description = "Storage account ID for private endpoint"
-  type        = string
-}
