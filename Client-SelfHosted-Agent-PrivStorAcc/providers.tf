@@ -14,5 +14,5 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
-  alias = "state_storage"
+  skip_provider_registration = true
 }
