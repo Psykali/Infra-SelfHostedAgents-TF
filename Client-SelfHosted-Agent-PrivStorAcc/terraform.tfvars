@@ -9,8 +9,8 @@ admin_password  = "YourSecurePassword123!"
 vm_size         = "Standard_B2s"
 
 # Azure DevOps variables
-ado_organization = "your-organization"
-ado_project      = "your-project"
+ado_organization = "bseforgedevops"
+ado_project      = "TestScripts-Forge"
 
 # Storage variables (for stage 1)
 storage_account_name = "bseclientstfrancecentral001"
