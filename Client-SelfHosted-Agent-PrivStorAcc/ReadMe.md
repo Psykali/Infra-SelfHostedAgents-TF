@@ -1,28 +1,24 @@
 Client-SelfHosted-Agent-PrivStorAcc/
-├── providers.tf
-├── variables.tf
-├── outputs.tf
-├── backend.tf
+├── stages/
+│   ├── 01-storage/
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   ├── storage.tf
+│   │   ├── private_endpoint.tf
+│   │   └── outputs.tf
+│   ├── 02-networking-vm/
+│   │   ├── providers.tf
+│   │   ├── variables.tf
+│   │   ├── networking.tf
+│   │   ├── vm.tf
+│   │   ├── private_endpoint_vm.tf
+│   │   └── outputs.tf
+│   └── 03-ado-agent/
+│       ├── providers.tf
+│       ├── variables.tf
+│       ├── ado_setup.tf
+│       └── outputs.tf
 ├── scripts/
-│   ├── setup_devops_agent.sh
-│   └── run_local_exec.sh
-├── networking/
-│   ├── hub_rg.tf
-│   ├── hub_vnet.tf
-│   ├── spoke_rg.tf
-│   ├── spoke_vnet.tf
-│   ├── vnet_peering.tf
-│   └── nsg.tf
-├── compute/
-│   ├── vm_rg.tf
-│   ├── ubuntu_vm.tf
-│   ├── vm_extension.tf
-│   └── data_disks.tf
-└── monitoring/
-│   ├── monitor_rg.tf
-│   └── diagnostics.tf
-└── state-storage/
-│   ├── providers.tf
-│   ├── variables.tf
-│   ├── storage.tf
-│   └── private-endpoint.tf
+│   ├── setup_agent.sh
+│   └── create_ado_resources.py
+└── terraform.tfvars
