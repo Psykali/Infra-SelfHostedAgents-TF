@@ -7,15 +7,11 @@ terraform {
     }
   }
 
-  backend "azurerm" {
-    resource_group_name  = "BSE-CLIENT-RG-FRANCE-CENTRAL-001"
-    storage_account_name = "bseclientstfrancecentral001"
-    container_name       = "tfstate"
-    key                  = "ado-agent.tfstate"
+  backend "local" {
+    path = "terraform-stage3.tfstate"
   }
 }
 
 provider "azuredevops" {
-  # PAT will be provided via environment variable AZDO_PERSONAL_ACCESS_TOKEN
   org_service_url = "https://dev.azure.com/${var.ado_organization}"
 }
