@@ -1,16 +1,19 @@
 resource "azurerm_storage_account" "tfstate" {
-  name                     = "bseclientstfr001"
+  name                     = var.storage_account_name
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
 
-  # Allow public access initially for Terraform backend setup
+  # Make it private from the beginning - no public access
   network_rules {
-    default_action             = "Allow"
+    default_action             = "Deny"
     ip_rules                   = []
     virtual_network_subnet_ids = []
+    
+    # Allow Azure services to bypass the rules for backend setup
+    bypass = ["AzureServices"]
   }
 
   tags = {
@@ -20,4 +23,9 @@ resource "azurerm_storage_account" "tfstate" {
   }
 }
 
-# Note: Container will be created in Stage 4 after private endpoint
+# Create the container immediately since we're using AzureServices bypass
+resource "azurerm_storage_container" "tfstate" {
+  name                  = "tfstate"
+  storage_account_name  = azurerm_storage_account.tfstate.name
+  container_access_type = "private"
+}
