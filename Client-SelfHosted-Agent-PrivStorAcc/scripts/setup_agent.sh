@@ -7,45 +7,39 @@ sudo apt-get upgrade -y
 
 # Install required packages
 echo "=== Installing packages ==="
-sudo apt-get install -y curl wget unzip apt-transport-https ca-certificates gnupg software-properties-common
+sudo apt-get install -y curl wget unzip apt-transport-https ca-certificates gnupg software-properties-common jq
 
 # Install Azure CLI
 echo "=== Installing Azure CLI ==="
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-# Install Docker (optional for container jobs)
-echo "=== Installing Docker ==="
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo usermod -aG docker $USER
-
 # Create devops agent user and directory
 echo "=== Setting up DevOps Agent ==="
-sudo useradd -m -s /bin/bash devopsagent
+sudo useradd -m -s /bin/bash devopsagent || echo "User devopsagent already exists"
 sudo usermod -aG sudo devopsagent
 sudo mkdir -p /opt/devops-agent
 sudo chown devopsagent:devopsagent /opt/devops-agent
 
-# Function to install DevOps agent
-install_agent() {
-    local AGENT_DIR="/opt/devops-agent"
-    cd $AGENT_DIR
-    
-    # Download latest agent
-    AGENT_VERSION=$(curl -s https://api.github.com/repos/microsoft/azure-pipelines-agent/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-    sudo -u devopsagent wget -q https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz
-    
-    # Extract agent
-    sudo -u devopsagent tar -zxvf vsts-agent-linux-x64-$AGENT_VERSION.tar.gz
-    
-    # Create systemd service
-    cat << EOF | sudo tee /etc/systemd/system/azure-devops-agent.service
+# Install DevOps Agent
+sudo -u devopsagent bash << 'EOF'
+cd /opt/devops-agent
+
+# Download latest agent
+AGENT_VERSION=$(curl -s https://api.github.com/repos/microsoft/azure-pipelines-agent/releases/latest | jq -r '.tag_name' | sed 's/v//')
+wget -q https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz
+
+# Extract agent
+tar -zxvf vsts-agent-linux-x64-$AGENT_VERSION.tar.gz
+rm vsts-agent-linux-x64-$AGENT_VERSION.tar.gz
+
+echo "Agent downloaded and extracted. Manual configuration required."
+echo "Run: cd /opt/devops-agent && ./config.sh"
+EOF
+
+# Create systemd service template
+cat << 'EOF' | sudo tee /etc/systemd/system/azure-devops-agent@.service
 [Unit]
-Description=Azure DevOps Agent
+Description=Azure DevOps Agent %i
 After=network.target
 
 [Service]
@@ -61,19 +55,12 @@ Environment=AGENT_ALLOW_RUNASROOT=1
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable azure-devops-agent.service
-    
-    echo "Agent installed. Manual configuration required with:"
-    echo "cd /opt/devops-agent && sudo -u devopsagent ./config.sh"
-}
-
-install_agent
+sudo systemctl daemon-reload
 
 echo "=== Setup completed successfully ==="
-echo "=== Installed packages: ==="
-echo "- System updates"
-echo "- curl, wget, unzip"
-echo "- Azure CLI"
-echo "- Docker"
-echo "- Azure DevOps Agent (manual configuration needed)"
+echo "Manual steps:"
+echo "1. SSH to the VM: ssh BseSelfAgent@<VM_IP>"
+echo "2. Switch to devopsagent: sudo -u devopsagent bash"
+echo "3. Configure agent: cd /opt/devops-agent && ./config.sh"
+echo "4. Enable service: sudo systemctl enable azure-devops-agent@1.service"
+echo "5. Start service: sudo systemctl start azure-devops-agent@1.service"
