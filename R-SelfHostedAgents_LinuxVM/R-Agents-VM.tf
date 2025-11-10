@@ -55,13 +55,7 @@ resource "null_resource" "setup_devops_agents" {
 
   # Copy the environment variables file
   provisioner "file" {
-    content = templatefile("${path.module}/agent-env.tpl", {
-      devops_org     = var.devops_org
-      devops_project = var.devops_project
-      devops_pool    = var.devops_pool
-      devops_pat     = var.devops_pat
-      agent_count    = var.agent_count
-    })
+    content = templatefile("${path.module}/agent-env.tpl")
     destination = "/tmp/agent-env.sh"
   }
 
