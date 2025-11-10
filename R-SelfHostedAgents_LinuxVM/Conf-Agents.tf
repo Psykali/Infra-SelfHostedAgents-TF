@@ -54,7 +54,6 @@ resource "null_resource" "setup_devops_agents" {
     "  agent_dir=\"/opt/az-agents/$agent_name\"",
     "  echo \"Setting up agent $agent_name in $agent_dir\"",
     "  sudo mkdir -p \"$agent_dir\"",
-    "  sudo chown -R \$USER:\$USER \"$agent_dir\"",
     "  cd \"$agent_dir\"",
     "  wget -q \"https://download.agent.dev.azure.com/agent/4.264.2/vsts-agent-linux-x64-4.264.2.tar.gz\"",
     "  tar -xzf \"vsts-agent-linux-x64-4.264.2.tar.gz\"",
