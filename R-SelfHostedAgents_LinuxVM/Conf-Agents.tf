@@ -23,16 +23,21 @@ resource "null_resource" "setup_devops_agents" {
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "sudo apt update && sudo apt upgrade -y",
-      "sudo apt install -y curl wget",
-      "sudo chmod +x agent-config.sh",
-      "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
-      "cat > /home/devopsadmin/agent-setup.sh << 'EOF'",
-      file("${path.module}/agent-setup.sh"),
-      "EOF",
-      "chmod +x /home/devopsadmin/agent-setup.sh",
-      "cd /home/devopsadmin && sudo ./agent-setup.sh"
+  inline = [
+    # Configure unattended upgrades first
+    "sudo apt update",
+    "sudo apt install -y unattended-upgrades",
+    "sudo dpkg-reconfigure -f noninteractive unattended-upgrades",
+    # Now do the upgrade
+    "sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
+    "sudo apt install -y curl wget",
+    "sudo chmod +x agent-config.sh",
+    "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
+    "cat > /home/devopsadmin/agent-setup.sh << 'EOF'",
+    file("${path.module}/agent-setup.sh"),
+    "EOF",
+    "chmod +x /home/devopsadmin/agent-setup.sh",
+    "cd /home/devopsadmin && sudo ./agent-setup.sh"
     ]
   }
 }
