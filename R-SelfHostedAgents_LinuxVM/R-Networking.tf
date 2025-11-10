@@ -1,4 +1,4 @@
-# Network Security Group
+# Network Security Group "NSG"
 resource "azurerm_network_security_group" "main" {
   name                = var.nsg_name
   location            = azurerm_resource_group.network_rg.location
@@ -15,33 +15,49 @@ resource "azurerm_network_security_group" "main" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  tags = merge(local.common_tags, {
+    Description = "NSG for DevOps agent VM"
+    Component   = "security"
+  })
 }
 
-# Virtual Network
+# Virtual Network "VNET"
 resource "azurerm_virtual_network" "main" {
   name                = var.vnet_name
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.network_rg.location
   resource_group_name = azurerm_resource_group.network_rg.name
+
+  tags = merge(local.common_tags, {
+    Description = "Virtual network for DevOps infrastructure"
+    Component   = "networking"
+  })
 }
 
-# Subnet
+# Subnet 
 resource "azurerm_subnet" "main" {
   name                 = var.subnet_name
   resource_group_name  = azurerm_resource_group.network_rg.name
-  virtual_network_name = azurerm_virtual_network.main.name  
+  virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
-# Public IP
+# Public IP "PIP"
 resource "azurerm_public_ip" "main" {
   name                = var.pip_name
   location            = azurerm_resource_group.network_rg.location
   resource_group_name = azurerm_resource_group.network_rg.name
   allocation_method   = "Dynamic"
+
+  tags = merge(local.common_tags, {
+    Description = "Public IP for DevOps agent VM"
+    Component   = "networking"
+    Ephemeral   = "true"  # Dynamic IPs can change
+  })
 }
 
-# Network Interface
+# Network Interface "NIC"
 resource "azurerm_network_interface" "main" {
   name                = var.nic_name
   location            = azurerm_resource_group.network_rg.location
@@ -49,14 +65,13 @@ resource "azurerm_network_interface" "main" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.main.id  
+    subnet_id                     = azurerm_subnet.main.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.main.id
   }
-}
 
-# Connect NSG to NIC
-resource "azurerm_network_interface_security_group_association" "main" {
-  network_interface_id      = azurerm_network_interface.main.id 
-  network_security_group_id = azurerm_network_security_group.main.id  
+  tags = merge(local.common_tags, {
+    Description = "Network interface for DevOps agent VM"
+    Component   = "networking"
+  })
 }
