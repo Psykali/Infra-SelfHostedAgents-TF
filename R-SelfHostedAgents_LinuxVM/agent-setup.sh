@@ -3,6 +3,7 @@
 
 # Parameters passed from Terraform
 DEVOPS_ORG="${devops_org}"
+DEVOPS_PROJECT="${devops_project}"
 DEVOPS_POOL="${devops_pool}"
 DEVOPS_PAT="${devops_pat}"
 AGENT_COUNT="${agent_count}"
@@ -51,13 +52,14 @@ setup_agent() {
         wget -q https://vstsagentpackage.azureedge.net/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
         tar -xzf vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
         
-        # Configure the agent
+        # Configure the agent with project name
         ./config.sh --unattended \
             --url "https://dev.azure.com/${DEVOPS_ORG}" \
             --auth pat \
             --token "${DEVOPS_PAT}" \
             --pool "${DEVOPS_POOL}" \
             --agent "${agent_name}" \
+            --projectname "${DEVOPS_PROJECT}" \
             --replace \
             --acceptTeeEula
         
