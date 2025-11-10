@@ -25,6 +25,7 @@ resource "null_resource" "setup_devops_agents" {
   provisioner "remote-exec" {
     inline = [
       "sudo apt update && sudo apt upgrade -y",
+      "sudo apt install -y curl wget",
       "sudo chmod +x agent-config.sh",
       "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
       "echo 'Starting agent configuration...'",
