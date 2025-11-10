@@ -32,7 +32,7 @@ resource "null_resource" "setup_devops_agents" {
       "DEVOPS_PAT='BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J'",
       "AGENT_COUNT=5",
       "echo 'Fixing package repositories and installing required packages...'",
-      "sudo export DEBIAN_FRONTEND=noninteractive",
+      "export DEBIAN_FRONTEND=noninteractive",
       "# Fix package sources - use Azure Ubuntu mirror for better reliability",
       "sudo sed -i 's/archive.ubuntu.com/azure.archive.ubuntu.com/g' /etc/apt/sources.list",
       "sudo sed -i 's/security.ubuntu.com/azure.archive.ubuntu.com/g' /etc/apt/sources.list",
