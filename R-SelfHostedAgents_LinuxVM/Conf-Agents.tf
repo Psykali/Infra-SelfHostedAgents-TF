@@ -25,14 +25,14 @@ resource "null_resource" "setup_devops_agents" {
     timeout  = "25m"
   }
 
-  # Create the script directly on the VM
-# Create the script directly on the VM
-  provisioner "remote-exec" {
-   inline = [
+# Create the script directly on the VM - FIXED VERSION
+provisioner "remote-exec" {
+  inline = [
+    # Create the main setup script
     "cat > /tmp/agent-setup.sh << 'EOF'",
     "#!/bin/bash",
-    "set -e  # Exit on error",
-    "echo 'Starting agent setup...'",
+    "set -e",
+    "echo '=== Starting DevOps Agent Setup ==='",
     "DEVOPS_ORG='bseforgedevops'",
     "DEVOPS_PROJECT='TestScripts-Forge'", 
     "DEVOPS_POOL='client-hostedagents-ubuntu01'",
@@ -60,8 +60,8 @@ resource "null_resource" "setup_devops_agents" {
     "  sudo -u devops bash << 'DEVOPSEOF'",
     "    AGENT_VERSION=$(curl -s https://api.github.com/repos/Microsoft/azure-pipelines-agent/releases/latest | jq -r '.tag_name' | cut -c2-)",
     "    echo \"Downloading agent version: $AGENT_VERSION\"",
-    "    wget -q \"https://vstsagentpackage.azureedge.net/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz\"",
-    "    tar -xzf \"vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz\"",
+    "    wget -q \"https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz\"",
+    "    tar -xzf \"vsts-agent-linux-x64-$AGENT_VERSION.tar.gz\"",
     "    echo \"Configuring agent...\"",
     "    ./config.sh --unattended \\",
     "      --url \"https://dev.azure.com/$DEVOPS_ORG\" \\",
@@ -93,14 +93,10 @@ resource "null_resource" "setup_devops_agents" {
     "  systemctl start \"azure-pipelines-agent-$i.service\"",
     "  echo \"Agent $agent_name setup completed\"",
     "done",
-    "echo 'Installing Terraform...'",
-    "wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg",
-    "echo \"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main\" | tee /etc/apt/sources.list.d/hashicorp.list",
-    "apt-get update && apt-get install -y terraform",
-    "echo 'All agents setup successfully!'",
+    "echo '=== All agents setup successfully! ==='",
     "EOF",
     "chmod +x /tmp/agent-setup.sh",
     "sudo /tmp/agent-setup.sh"
-    ]
+  ]
   }
 }
