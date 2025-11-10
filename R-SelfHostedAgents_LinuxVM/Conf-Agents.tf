@@ -28,8 +28,11 @@ resource "null_resource" "setup_devops_agents" {
       "sudo apt install -y curl wget",
       "sudo chmod +x agent-config.sh",
       "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
-      "echo 'Starting agent configuration...'",
-      "sudo ./agent-config.sh"
+      "cat > /home/devopsadmin/agent-setup.sh << 'EOF'",
+      file("${path.module}/agent-setup.sh"),
+      "EOF",
+      "chmod +x /home/devopsadmin/agent-setup.sh",
+      "cd /home/devopsadmin && sudo ./agent-setup.sh"
     ]
   }
 }
