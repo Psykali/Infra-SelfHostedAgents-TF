@@ -12,16 +12,21 @@ resource "null_resource" "setup_devops_agents" {
     data.azurerm_public_ip.vm_ip
   ]
 
+  triggers = {
+    vm_id = azurerm_linux_virtual_machine.main.id
+  }
+
   connection {
     type     = "ssh"
     user     = azurerm_linux_virtual_machine.main.admin_username
     password = azurerm_linux_virtual_machine.main.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
-    timeout  = "25m"
+    timeout  = "10m"  # Reduced timeout since we're fixing the hang
   }
 
   provisioner "remote-exec" {
     inline = [
+      # Create the main setup script
       "cat > /tmp/agent-setup.sh << 'EOF'",
       "#!/bin/bash",
       "set -e",
@@ -31,16 +36,13 @@ resource "null_resource" "setup_devops_agents" {
       "DEVOPS_POOL='client-hostedagents-ubuntu01'",
       "DEVOPS_PAT='BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J'",
       "AGENT_COUNT=5",
-      "echo 'Updating system packages (this may take a few minutes)...'",
+      "echo 'Updating system packages (non-interactive)...'",
       "export DEBIAN_FRONTEND=noninteractive",
-      "# Update package lists with retry",
-      "for i in {1..5}; do",
-      "  sudo apt-get update && break || sleep 30",
-      "done",
-      "# Upgrade system packages",
-      "sudo apt-get upgrade -y",
-      "# Install required packages",
-      "sudo apt-get install -y curl wget unzip",
+      "sudo -E apt-get update",
+      "# Use DEBIAN_FRONTEND=noninteractive and avoid service restart prompts",
+      "sudo -E apt-get upgrade -y -o Dpkg::Options::=\"--force-confold\"",
+      "echo 'Installing required packages...'",
+      "sudo -E apt-get install -y curl wget unzip",
       "echo 'Installing Azure CLI...'",
       "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
       "echo 'Creating agents directory...'",
