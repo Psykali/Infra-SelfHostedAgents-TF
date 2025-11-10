@@ -1,72 +1,200 @@
 #!/bin/bash
-DEVOPS_ORG="bseforgedevops"
-DEVOPS_PROJECT="TestScripts-Forge"
-DEVOPS_POOL="client-hostedagents-ubuntu01"
-DEVOPS_PAT="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
-AGENT_COUNT="5"
+set -e
 
-# Install Azure CLI
-echo "Installing Azure CLI..."
-sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+# =============================================
+# CONFIGURATION VARIABLES
+# =============================================
+AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops"
+PAT_TOKEN="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
+POOL_NAME="bseforge-ubuntu24-001-agentpool"
+AGENT_COUNT=5
+AGENTS_BASE_DIR="/opt/azure-devops-agents"
+AGENT_DIR_PREFIX="bseforge-agent"
+AGENT_VERSION="4.261.0"
+SERVICE_USER="devopsadmin"
 
-# Create devops user and director
-sudo mkdir -p /opt/az_devops/agents
+# =============================================
+# FUNCTIONS
+# =============================================
 
+download_agent_package() {
+    echo "Downloading Azure DevOps agent version $AGENT_VERSION..."
+    cd /tmp
+    if [ ! -f "vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" ]; then
+        wget -q "https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+        echo "✓ Agent package downloaded"
+    else
+        echo "✓ Agent package already exists"
+    fi
+}
 
-# Function to install and configure a single agent
 setup_agent() {
-    local agent_number=$1
-    local agent_name="agent-${agent_number}"
-    local agent_dir="/opt/az_devops/agents/${agent_name}"
-    
-    echo "Setting up agent ${agent_name}..."
-    
-    # Create directory for agent
-    sudo mkdir -p $agent_dir
-    
-    # Download and install agent
-    cd $agent_dir
-    sudo bash << EOF
-        # Download the agent
-        AGENT_VERSION=4.264.2
-        sudo wget -q https://download.agent.dev.azure.com/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
-        sudo tar -xzf vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
-        
-        # Configure the agent with project name
-        sudo ./config.sh --unattended --url "https://dev.azure.com/${DEVOPS_ORG}" --auth pat --token "${DEVOPS_PAT}" --pool "${DEVOPS_POOL}" --agent "${agent_name}" --projectname "${DEVOPS_PROJECT}" --replace --acceptTeeEula
-        
-        # Create systemd service
-        sudo ./run.sh
-EOF
+    local agent_num=$1
+    local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
+    local agent_name="bseforge-ubuntu-agent-$agent_num"
 
-    # Create systemd service file
-    cat > /etc/systemd/system/azure-pipelines-agent-${agent_number}.service << EOF
+    echo "=== Setting up Agent $agent_num ==="
+
+    # Create agent directory
+    mkdir -p "$agent_dir"
+    echo "✓ Created directory: $agent_dir"
+
+    # Extract agent files if not already present
+    if [ ! -f "$agent_dir/config.sh" ]; then
+        echo "Extracting agent files..."
+        tar -zxf "/tmp/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" -C "$agent_dir"
+        chmod +x "$agent_dir"/*.sh
+        echo "✓ Agent files extracted"
+    fi
+
+    cd "$agent_dir"
+
+    # Remove existing configuration if present
+    if [ -f ".agent" ]; then
+        echo "Removing existing configuration..."
+        ./config.sh remove --unattended --auth pat --token "$PAT_TOKEN" > /dev/null 2>&1 || true
+        sleep 1
+    fi
+
+    # Configure agent
+    echo "Configuring agent..."
+    if ./config.sh --unattended \
+        --url "$AZURE_DEVOPS_URL" \
+        --auth pat \
+        --token "$PAT_TOKEN" \
+        --pool "$POOL_NAME" \
+        --agent "$agent_name" \
+        --work "_work$agent_num" \
+        --replace \
+        --acceptTeeEula; then
+        echo "✓ Agent $agent_num configured successfully"
+        return 0
+    else
+        echo "✗ Failed to configure Agent $agent_num"
+        return 1
+    fi
+}
+
+create_systemd_service() {
+    local agent_num=$1
+    local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
+    local service_name="azdevops-agent-$agent_num"
+    local service_file="/etc/systemd/system/$service_name.service"
+
+    # Check if agent directory exists and has required files
+    if [ ! -f "$agent_dir/runsvc.sh" ]; then
+        echo "⚠️  Skipping service creation for agent $agent_num: runsvc.sh not found"
+        return 1
+    fi
+
+    echo "Creating systemd service: $service_name"
+
+    sudo tee "$service_file" > /dev/null << EOF
 [Unit]
-Description=Azure Pipelines Agent ${agent_number}
+Description=Azure DevOps Agent $agent_num
 After=network.target
+Wants=network.target
 
 [Service]
 Type=simple
-User=devops
-WorkingDirectory=${agent_dir}
-ExecStart=${agent_dir}/run.sh
+User=$SERVICE_USER
+WorkingDirectory=$agent_dir
+ExecStart=$agent_dir/runsvc.sh
 Restart=always
 RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Enable and start the service
-    sudo systemctl enable azure-pipelines-agent-${agent_number}.service
-    sudo systemctl start azure-pipelines-agent-${agent_number}.service
-    
-    echo "Agent ${agent_name} setup completed and service started"
+    sudo systemctl daemon-reload
+    sudo systemctl enable "$service_name" > /dev/null 2>&1
+    echo "✓ Systemd service created and enabled: $service_name"
 }
 
-# Install multiple agents
+start_agent_service() {
+    local agent_num=$1
+    local service_name="azdevops-agent-$agent_num"
+
+    if sudo systemctl start "$service_name"; then
+        echo "✓ Started service: $service_name"
+    else
+        echo "✗ Failed to start service: $service_name"
+        sudo systemctl status "$service_name" --no-pager -l | tail -3
+    fi
+}
+
+show_status() {
+    echo
+    echo "============================================="
+    echo "SETUP COMPLETED - STATUS SUMMARY"
+    echo "============================================="
+    
+    for i in $(seq 1 $AGENT_COUNT); do
+        local service_name="azdevops-agent-$i"
+        local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$i"
+        
+        echo "Agent $i:"
+        echo "  Directory: $agent_dir"
+        
+        if [ -f "/etc/systemd/system/$service_name.service" ]; then
+            local status=$(systemctl is-active "$service_name" 2>/dev/null || echo "not-found")
+            case "$status" in
+                "active") echo "  Service: 🟢 RUNNING" ;;
+                "failed") echo "  Service: 🔴 FAILED" ;;
+                "inactive") echo "  Service: ⚪ STOPPED" ;;
+                *) echo "  Service: ❓ UNKNOWN" ;;
+            esac
+        else
+            echo "  Service: ⚠️  NOT CREATED"
+        fi
+        echo
+    done
+}
+
+# =============================================
+# MAIN EXECUTION
+# =============================================
+
+echo "Starting Azure DevOps Agents Setup"
+echo "============================================="
+
+# Create base directory
+sudo mkdir -p "$AGENTS_BASE_DIR"
+sudo chown "$SERVICE_USER:$SERVICE_USER" "$AGENTS_BASE_DIR"
+
+# Download agent package
+download_agent_package
+
+# Setup each agent
+successful_agents=0
 for i in $(seq 1 $AGENT_COUNT); do
-    sudo setup_agent $i
+    if setup_agent $i; then
+        ((successful_agents++))
+        create_systemd_service $i
+    fi
+    echo
 done
 
-echo "All agents setup completed successfully!"
+# Start all services
+echo "Starting all agent services..."
+for i in $(seq 1 $AGENT_COUNT); do
+    start_agent_service $i
+done
+
+# Show final status
+show_status
+
+echo "============================================="
+echo "SETUP COMPLETED: $successful_agents/$AGENT_COUNT agents configured"
+echo "Agents are installed in: $AGENTS_BASE_DIR"
+echo "Systemd services: azdevops-agent-1 through azdevops-agent-$AGENT_COUNT"
+echo "Check status: systemctl status azdevops-agent-*"
+echo "View logs: journalctl -u azdevops-agent-1 -f"
+echo "============================================="
