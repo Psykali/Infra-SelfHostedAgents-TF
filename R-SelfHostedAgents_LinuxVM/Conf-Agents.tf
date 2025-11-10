@@ -24,9 +24,9 @@ resource "null_resource" "setup_devops_agents" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x /home/devopsadmin/agent-config.sh",
+      "sudo chmod +x agent-config.sh",
       "echo 'Starting agent configuration...'",
-      "sudo /home/devopsadmin/agent-config.sh"
+      "sudo ./agent-config.sh"
     ]
   }
 }
