@@ -12,21 +12,16 @@ resource "null_resource" "setup_devops_agents" {
     data.azurerm_public_ip.vm_ip
   ]
 
-  triggers = {
-    vm_id = azurerm_linux_virtual_machine.main.id
-  }
-
   connection {
     type     = "ssh"
     user     = azurerm_linux_virtual_machine.main.admin_username
     password = azurerm_linux_virtual_machine.main.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
-    timeout  = "10m"  # Reduced timeout since we're fixing the hang
+    timeout  = "15m"
   }
 
   provisioner "remote-exec" {
     inline = [
-      # Create the main setup script
       "cat > /tmp/agent-setup.sh << 'EOF'",
       "#!/bin/bash",
       "set -e",
@@ -36,13 +31,21 @@ resource "null_resource" "setup_devops_agents" {
       "DEVOPS_POOL='client-hostedagents-ubuntu01'",
       "DEVOPS_PAT='BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J'",
       "AGENT_COUNT=5",
-      "echo 'Updating system packages (non-interactive)...'",
+      "echo 'Fixing package repositories and installing required packages...'",
       "export DEBIAN_FRONTEND=noninteractive",
-      "sudo -E apt-get update",
-      "# Use DEBIAN_FRONTEND=noninteractive and avoid service restart prompts",
-      "sudo -E apt-get upgrade -y -o Dpkg::Options::=\"--force-confold\"",
-      "echo 'Installing required packages...'",
-      "sudo -E apt-get install -y curl wget unzip",
+      "# Fix package sources - use Azure Ubuntu mirror for better reliability",
+      "sudo sed -i 's/archive.ubuntu.com/azure.archive.ubuntu.com/g' /etc/apt/sources.list",
+      "sudo sed -i 's/security.ubuntu.com/azure.archive.ubuntu.com/g' /etc/apt/sources.list",
+      "# Update package lists with retry",
+      "for i in {1..5}; do",
+      "  echo 'Attempt $i to update package lists...'",
+      "  sudo apt-get update && break || sleep 10",
+      "done",
+      "# Install packages with retry",
+      "for i in {1..5}; do",
+      "  echo 'Attempt $i to install packages...'",
+      "  sudo apt-get install -y curl wget unzip && break || sleep 10",
+      "done",
       "echo 'Installing Azure CLI...'",
       "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
       "echo 'Creating agents directory...'",
