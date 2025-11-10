@@ -1,12 +1,9 @@
 #!/bin/bash
-# agent-setup.sh
-
-# Parameters passed from Terraform
-DEVOPS_ORG="${devops_org}"
-DEVOPS_PROJECT="${devops_project}"
-DEVOPS_POOL="${devops_pool}"
-DEVOPS_PAT="${devops_pat}"
-AGENT_COUNT="${agent_count}"
+DEVOPS_ORG="bseforgedevops"
+DEVOPS_PROJECT="TestScripts-Forge"
+DEVOPS_POOL="client-hostedagents-ubuntu01"
+DEVOPS_PAT="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
+AGENT_COUNT="5"
 
 # Update and upgrade system
 echo "Updating system packages..."
