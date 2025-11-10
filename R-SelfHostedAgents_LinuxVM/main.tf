@@ -40,7 +40,7 @@ resource "azurerm_virtual_network" "main" {
 resource "azurerm_subnet" "main" {
   name                 = var.subnet_name
   resource_group_name  = azurerm_resource_group.network_rg.name
-  virtual_network_name = azurerm_virtual_network.network_rg.name
+  virtual_network_name = azurerm_virtual_network.main.name  
   address_prefixes     = ["10.0.2.0/24"]
 }
 
@@ -60,7 +60,7 @@ resource "azurerm_network_interface" "main" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.network_rg.id
+    subnet_id                     = azurerm_subnet.main.id  
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.main.id
   }
@@ -68,8 +68,8 @@ resource "azurerm_network_interface" "main" {
 
 # Connect NSG to NIC
 resource "azurerm_network_interface_security_group_association" "main" {
-  network_interface_id      = azurerm_network_interface.network_rg.id
-  network_security_group_id = azurerm_network_security_group.network_rg.id
+  network_interface_id      = azurerm_network_interface.main.id 
+  network_security_group_id = azurerm_network_security_group.main.id  
 }
 
 # Linux Virtual Machine
@@ -80,6 +80,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   size                = var.vm_size
   admin_username      = "devopsadmin"
   admin_password      = "FGHJfghj1234"
+  disable_password_authentication = false  
   network_interface_ids = [
     azurerm_network_interface.main.id,
   ]
@@ -99,6 +100,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   # Custom script to install and configure DevOps agents
   custom_data = base64encode(templatefile("${path.module}/agent-setup.sh", {
     devops_org    = var.devops_org
+    devops_project = var.devops_project  
     devops_pool   = var.devops_pool
     devops_pat    = var.devops_pat
     agent_count   = var.agent_count
@@ -117,6 +119,6 @@ output "vm_resource_group_name" {
   value = azurerm_resource_group.vm_rg.name
 }
 
-output "netowrking_resource_group_name" {
+output "networking_resource_group_name" {  
   value = azurerm_resource_group.network_rg.name
 }
