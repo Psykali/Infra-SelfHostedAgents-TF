@@ -26,6 +26,16 @@ resource "azurerm_linux_virtual_machine" "main" {
   identity {
     type = "SystemAssigned"
   }
+
+  tags = merge(local.common_tags, {
+    Description     = "Ubuntu VM hosting Azure DevOps self-hosted agents"
+    Component       = "compute"
+    OS              = "Ubuntu-22.04-LTS"
+    VM-Size         = var.vm_size
+    AutoPatch       = "false"
+    Backup          = "false"
+    Monitoring      = "basic"
+  })
 }
 
 # Create a null_resource with local-exec provisioner
