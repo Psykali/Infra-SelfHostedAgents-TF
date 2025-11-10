@@ -43,8 +43,13 @@ variable "agent_count" {
 }
 
 variable "devops_org" {
-  description = "Azure DevOps organization URL"
-  default = "https://dev.azure.com/bseforgedevops"
+  description = "Azure DevOps organization"
+  default = "bseforgedevops"
+}
+
+variable "devops_project" {
+  description = "Azure DevOps Project"
+  default = "TestScripts-Forge"
 }
 
 variable "devops_pool" {
