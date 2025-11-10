@@ -19,7 +19,7 @@ resource "null_resource" "setup_devops_agents" {
   # Upload the script file
   provisioner "file" {
     source      = "agent-setup.sh"
-    destination = "agent-config.sh"
+    destination = "agent-setup.sh"
   }
 
   provisioner "remote-exec" {
