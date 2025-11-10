@@ -19,14 +19,11 @@ resource "null_resource" "setup_devops_agents" {
   # Upload the script file
   provisioner "file" {
     source      = "agent-setup.sh"
-    destination = "/home/devopsadmin/agent-config.sh"
+    destination = "agent-config.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "echo 'Checking if file was uploaded...'",
-      "ls -la /home/devopsadmin/agent-config.sh",
-      "echo 'Setting permissions...'",
       "sudo chmod +x /home/devopsadmin/agent-config.sh",
       "echo 'Starting agent configuration...'",
       "sudo /home/devopsadmin/agent-config.sh"
