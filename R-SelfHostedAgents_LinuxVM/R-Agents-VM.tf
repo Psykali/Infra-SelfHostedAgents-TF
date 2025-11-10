@@ -23,9 +23,56 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = "latest"
   }
 
-  custom_data = base64encode(file("${path.module}/agent-setup.sh" ))
-
   identity {
     type = "SystemAssigned"
+  }
+}
+
+# Create a null_resource with local-exec provisioner
+resource "null_resource" "setup_devops_agents" {
+  depends_on = [azurerm_linux_virtual_machine.main]
+
+  # Trigger on VM creation or when script changes
+  triggers = {
+    vm_id         = azurerm_linux_virtual_machine.main.id
+    script_hash   = filesha256("${path.module}/agent-setup.sh")
+  }
+
+  # Connection configuration for SSH
+  connection {
+    type     = "ssh"
+    user     = azurerm_linux_virtual_machine.main.admin_username
+    password = azurerm_linux_virtual_machine.main.admin_password
+    host     = azurerm_public_ip.main.ip_address
+    timeout  = "10m"
+  }
+
+  # Copy the script to the VM
+  provisioner "file" {
+    source      = "${path.module}/agent-setup.sh"
+    destination = "/tmp/agent-setup.sh"
+  }
+
+  # Copy the environment variables file
+  provisioner "file" {
+    content = templatefile("${path.module}/agent-env.tpl", {
+      devops_org     = var.devops_org
+      devops_project = var.devops_project
+      devops_pool    = var.devops_pool
+      devops_pat     = var.devops_pat
+      agent_count    = var.agent_count
+    })
+    destination = "/tmp/agent-env.sh"
+  }
+
+  # Execute the script on the VM
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/agent-setup.sh",
+      "chmod +x /tmp/agent-env.sh",
+      "source /tmp/agent-env.sh",
+      "sudo /tmp/agent-setup.sh",
+      "echo 'Agent setup completed successfully'"
+    ]
   }
 }
