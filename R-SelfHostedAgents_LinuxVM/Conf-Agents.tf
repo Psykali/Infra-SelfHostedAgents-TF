@@ -28,7 +28,7 @@ resource "null_resource" "setup_devops_agents" {
   # Create the script directly on the VM
 # Create the script directly on the VM
   provisioner "remote-exec" {
-  inline = [
+   inline = [
     "cat > /tmp/agent-setup.sh << 'EOF'",
     "#!/bin/bash",
     "set -e  # Exit on error",
