@@ -1,13 +1,22 @@
-# Create a null_resource with local-exec provisioner
+# Get the public IP address after VM creation
+data "azurerm_public_ip" "vm_ip" {
+  name                = azurerm_public_ip.main.name
+  resource_group_name = azurerm_resource_group.network_rg.name
+  
+  depends_on = [azurerm_linux_virtual_machine.main]
+}
+
+# Create a null_resource that waits for VM and public IP
 resource "null_resource" "setup_devops_agents" {
   depends_on = [
     azurerm_linux_virtual_machine.main,
-    output.azurerm_public_ip.main.ip_address
+    azurerm_public_ip.main,
+    data.azurerm_public_ip.vm_ip
   ]
 
   triggers = {
     vm_id         = azurerm_linux_virtual_machine.main.id
-    public_ip     = output.azurerm_public_ip.vm_ip.ip_address
+    public_ip     = data.azurerm_public_ip.vm_ip.ip_address
     script_hash   = filesha256("${path.module}/agent-setup.sh")
   }
 
@@ -16,8 +25,8 @@ resource "null_resource" "setup_devops_agents" {
     type     = "ssh"
     user     = azurerm_linux_virtual_machine.main.admin_username
     password = azurerm_linux_virtual_machine.main.admin_password
-    host     = output.azurerm_public_ip.vm_ip.ip_address
-    timeout  = "10m"
+    host     = data.azurerm_public_ip.vm_ip.ip_address
+    timeout  = "25m"
   }
 
   # Copy the script to the VM
