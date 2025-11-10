@@ -22,19 +22,14 @@ resource "null_resource" "setup_devops_agents" {
     destination = "/tmp/agent-config.sh"
   }
 
-  # Execute the setup
   provisioner "remote-exec" {
     inline = [
-      "set -e",
-      "echo 'Updating system packages...'",
-      "sudo apt-get update",
-      "echo 'Installing required packages...'",
-      "sudo apt-get install -y curl wget unzip", 
-      "echo 'Downloaded script, setting permissions...'",
+      "echo 'Checking if file was uploaded...'",
+      "ls -la /tmp/agent-config.sh",
+      "echo 'Setting permissions...'",
       "sudo chmod +x /tmp/agent-config.sh",
       "echo 'Starting agent configuration...'",
-      "sudo /tmp/agent-config.sh",
-      "echo 'Agent configuration completed successfully!'"
+      "sudo /tmp/agent-config.sh"
     ]
   }
 }
