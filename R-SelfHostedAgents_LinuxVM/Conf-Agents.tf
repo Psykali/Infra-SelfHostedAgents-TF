@@ -11,8 +11,8 @@ resource "null_resource" "setup_devops_agents" {
 
   connection {
     type     = "ssh"
-    user     = "devopsadmin"
-    password = var.admin_password
+    user     = azurerm_linux_virtual_machine.main.admin_user
+    password = azurerm_linux_virtual_machine.main.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
   }
 
