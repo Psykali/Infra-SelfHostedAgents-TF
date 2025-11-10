@@ -29,9 +29,9 @@ resource "null_resource" "setup_devops_agents" {
     timeout  = "25m"
   }
 
-  # Copy the script to the VM
+  # Create the script directly on the VM
   provisioner "file" {
-    source      = "${path.module}/agent-setup.sh"
+    content = templatefile("${path.module}/agent-setup.sh", {})
     destination = "/tmp/agent-setup.sh"
   }
 
