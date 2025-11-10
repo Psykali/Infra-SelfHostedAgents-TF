@@ -25,78 +25,75 @@ resource "null_resource" "setup_devops_agents" {
     timeout  = "25m"
   }
 
-# Create the script directly on the VM - FIXED VERSION
-provisioner "remote-exec" {
+# Create the script directly on the VM
+  provisioner "remote-exec" {
   inline = [
-    # Create the main setup script
-    "cat > /tmp/agent-setup.sh << 'EOF'",
-    "#!/bin/bash",
-    "set -e",
-    "echo '=== Starting DevOps Agent Setup ==='",
-    "DEVOPS_ORG='bseforgedevops'",
-    "DEVOPS_PROJECT='TestScripts-Forge'", 
-    "DEVOPS_POOL='client-hostedagents-ubuntu01'",
-    "DEVOPS_PAT='BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J'",
-    "AGENT_COUNT=5",
-    "echo 'Updating system and installing packages...'",
-    "export DEBIAN_FRONTEND=noninteractive",
-    "apt-get update",
-    "apt-get upgrade -y",
-    "apt-get install -y curl wget unzip git jq software-properties-common",
-    "echo 'Installing Azure CLI...'",
-    "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
-    "echo 'Creating devops user...'",
-    "useradd -m -s /bin/bash devops || echo 'User already exists'",
-    "mkdir -p /home/devops/agents",
-    "chown -R devops:devops /home/devops/agents",
-    "echo 'Setting up agents...'",
-    "for i in {1..5}; do",
-    "  agent_name=\"agent-$i\"",
-    "  agent_dir=\"/home/devops/agents/$agent_name\"",
-    "  echo \"Setting up agent $agent_name in $agent_dir\"",
-    "  mkdir -p \"$agent_dir\"",
-    "  chown devops:devops \"$agent_dir\"",
-    "  cd \"$agent_dir\"",
-    "  sudo -u devops bash << 'DEVOPSEOF'",
-    "    AGENT_VERSION=$(curl -s https://api.github.com/repos/Microsoft/azure-pipelines-agent/releases/latest | jq -r '.tag_name' | cut -c2-)",
-    "    echo \"Downloading agent version: $AGENT_VERSION\"",
-    "    wget -q \"https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz\"",
-    "    tar -xzf \"vsts-agent-linux-x64-$AGENT_VERSION.tar.gz\"",
-    "    echo \"Configuring agent...\"",
-    "    ./config.sh --unattended \\",
-    "      --url \"https://dev.azure.com/$DEVOPS_ORG\" \\",
-    "      --auth pat \\",
-    "      --token \"$DEVOPS_PAT\" \\",
-    "      --pool \"$DEVOPS_POOL\" \\",
-    "      --agent \"$agent_name\" \\",
-    "      --projectname \"$DEVOPS_PROJECT\" \\",
-    "      --replace \\",
-    "      --acceptTeeEula",
-    "    sudo ./svc.sh install devops",
-    "DEVOPSEOF",
-    "  # Create systemd service",
-    "  cat > \"/etc/systemd/system/azure-pipelines-agent-$i.service\" << SERVICEEOF",
-    "[Unit]",
-    "Description=Azure Pipelines Agent $i",
-    "After=network.target",
-    "[Service]",
-    "Type=simple",
-    "User=devops",
-    "WorkingDirectory=$agent_dir",
-    "ExecStart=$agent_dir/run.sh",
-    "Restart=always",
-    "RestartSec=10",
-    "[Install]",
-    "WantedBy=multi-user.target",
-    "SERVICEEOF",
-    "  systemctl enable \"azure-pipelines-agent-$i.service\"",
-    "  systemctl start \"azure-pipelines-agent-$i.service\"",
-    "  echo \"Agent $agent_name setup completed\"",
-    "done",
-    "echo '=== All agents setup successfully! ==='",
-    "EOF",
-    "chmod +x /tmp/agent-setup.sh",
-    "sudo /tmp/agent-setup.sh"
-  ]
+    # Step 1: Fix APT issues first
+    "echo '=== Fixing APT package manager ==='",
+    "sudo rm -rf /var/lib/apt/lists/*",
+    "sudo apt-get clean",
+    "sudo apt-get update --fix-missing || true",
+    
+    # Step 2: Install required packages with error handling
+    "echo '=== Installing required packages ==='",
+    "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y curl wget unzip git jq software-properties-common apt-transport-https ca-certificates gnupg lsb-release",
+    
+    # Step 3: Install Azure CLI
+    "echo '=== Installing Azure CLI ==='",
+    "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
+    
+    # Step 4: Create user and directories
+    "echo '=== Creating user and directories ==='",
+    "sudo useradd -m -s /bin/bash devops 2>/dev/null || true",
+    "sudo mkdir -p /home/devops/agents",
+    "sudo chown -R devops:devops /home/devops/agents",
+    
+    # Step 5: Setup 1st agent with hardcoded version
+    "echo '=== Setting up first agent ==='",
+    "sudo -u devops mkdir -p /home/devops/agents/agent-1",
+    "cd /home/devops/agents/agent-1",
+    "sudo -u devops wget -q https://vstsagentpackage.azureedge.net/agent/3.227.2/vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops tar -xzf vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops ./config.sh --unattended --url 'https://dev.azure.com/bseforgedevops' --auth pat --token 'BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J' --pool 'client-hostedagents-ubuntu01' --agent 'agent-1' --projectname 'TestScripts-Forge' --replace --acceptTeeEula",
+    "sudo ./svc.sh install devops",
+    
+    # Step 6: Setup 2nd agent
+    "echo '=== Setting up second agent ==='",
+    "sudo -u devops mkdir -p /home/devops/agents/agent-2",
+    "cd /home/devops/agents/agent-2", 
+    "sudo -u devops wget -q https://vstsagentpackage.azureedge.net/agent/3.227.2/vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops tar -xzf vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops ./config.sh --unattended --url 'https://dev.azure.com/bseforgedevops' --auth pat --token 'BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J' --pool 'client-hostedagents-ubuntu01' --agent 'agent-2' --projectname 'TestScripts-Forge' --replace --acceptTeeEula",
+    "sudo ./svc.sh install devops",
+    
+    # Step 7: Setup 3rd agent
+    "echo '=== Setting up second agent ==='",
+    "sudo -u devops mkdir -p /home/devops/agents/agent-3",
+    "cd /home/devops/agents/agent-3", 
+    "sudo -u devops wget -q https://vstsagentpackage.azureedge.net/agent/3.227.2/vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops tar -xzf vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops ./config.sh --unattended --url 'https://dev.azure.com/bseforgedevops' --auth pat --token 'BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J' --pool 'client-hostedagents-ubuntu01' --agent 'agent-2' --projectname 'TestScripts-Forge' --replace --acceptTeeEula",
+    "sudo ./svc.sh install devops",
+    
+    # Step 8: Setup 4th agent
+    "echo '=== Setting up second agent ==='",
+    "sudo -u devops mkdir -p /home/devops/agents/agent-4",
+    "cd /home/devops/agents/agent-4", 
+    "sudo -u devops wget -q https://vstsagentpackage.azureedge.net/agent/3.227.2/vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops tar -xzf vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops ./config.sh --unattended --url 'https://dev.azure.com/bseforgedevops' --auth pat --token 'BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J' --pool 'client-hostedagents-ubuntu01' --agent 'agent-2' --projectname 'TestScripts-Forge' --replace --acceptTeeEula",
+    "sudo ./svc.sh install devops",
+    
+    # Step 9: Setup 5th agent
+    "echo '=== Setting up second agent ==='",
+    "sudo -u devops mkdir -p /home/devops/agents/agent-5",
+    "cd /home/devops/agents/agent-5", 
+    "sudo -u devops wget -q https://vstsagentpackage.azureedge.net/agent/3.227.2/vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops tar -xzf vsts-agent-linux-x64-3.227.2.tar.gz",
+    "sudo -u devops ./config.sh --unattended --url 'https://dev.azure.com/bseforgedevops' --auth pat --token 'BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J' --pool 'client-hostedagents-ubuntu01' --agent 'agent-2' --projectname 'TestScripts-Forge' --replace --acceptTeeEula",
+    "sudo ./svc.sh install devops",
+    
+    "echo '=== Setup completed successfully! ==='"
+   ]
   }
 }
