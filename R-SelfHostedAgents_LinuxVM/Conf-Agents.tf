@@ -1,24 +1,13 @@
-# Get the public IP address after allocation
-data "azurerm_public_ip" "vm_ip" {
-  name                = azurerm_public_ip.main.name
-  resource_group_name = azurerm_resource_group.network_rg.name
-  
-  depends_on = [
-    azurerm_linux_virtual_machine.main,
-    azurerm_public_ip.main
-    ]
-}
-
 # Create a null_resource with local-exec provisioner
 resource "null_resource" "setup_devops_agents" {
   depends_on = [
     azurerm_linux_virtual_machine.main,
-    data.azurerm_public_ip.vm_ip
+    output.azurerm_public_ip.main.ip_address
   ]
 
   triggers = {
     vm_id         = azurerm_linux_virtual_machine.main.id
-    public_ip     = data.azurerm_public_ip.vm_ip.ip_address
+    public_ip     = output.azurerm_public_ip.vm_ip.ip_address
     script_hash   = filesha256("${path.module}/agent-setup.sh")
   }
 
@@ -43,7 +32,7 @@ resource "null_resource" "setup_devops_agents" {
     type     = "ssh"
     user     = azurerm_linux_virtual_machine.main.admin_username
     password = azurerm_linux_virtual_machine.main.admin_password
-    host     = data.azurerm_public_ip.vm_ip.ip_address
+    host     = output.azurerm_public_ip.vm_ip.ip_address
     timeout  = "10m"
   }
 
