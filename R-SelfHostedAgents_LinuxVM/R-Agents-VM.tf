@@ -53,9 +53,12 @@ resource "null_resource" "setup_devops_agents" {
     destination = "/tmp/agent-setup.sh"
   }
 
-  # Copy the environment variables file
+  # Copy a simple environment variables file (no templating needed)
   provisioner "file" {
-    content = templatefile("${path.module}/agent-env.tpl")
+    content = <<-EOF
+      # Environment variables will be set in the script itself
+      echo "Using variables from agent-setup.sh"
+    EOF
     destination = "/tmp/agent-env.sh"
   }
 
@@ -64,7 +67,6 @@ resource "null_resource" "setup_devops_agents" {
     inline = [
       "chmod +x /tmp/agent-setup.sh",
       "chmod +x /tmp/agent-env.sh",
-      "source /tmp/agent-env.sh",
       "sudo /tmp/agent-setup.sh",
       "echo 'Agent setup completed successfully'"
     ]
