@@ -169,14 +169,10 @@ resource "azurerm_linux_virtual_machine" "main" {
   location            = azurerm_resource_group.vm_main.location
   size                = var.vm_size
   admin_username      = "devopsadmin"
+  admin_password      = "FGHJfghj1234"
   network_interface_ids = [
     azurerm_network_interface.main.id,
   ]
-
-  admin_ssh_key {
-    username   = "devopsadmin"
-    public_key = file("~/.ssh/id_rsa.pub")
-  }
 
   os_disk {
     caching              = "ReadWrite"
