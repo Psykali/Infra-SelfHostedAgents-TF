@@ -34,7 +34,7 @@ resource "null_resource" "setup_devops_agents" {
     "sudo chmod +x /home/devopsadmin/agent-setup.sh",
     
     # Install Azure CLI
-    "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
+    "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
     
     # Wait for Azure CLI installation to complete
     "sleep 10",
