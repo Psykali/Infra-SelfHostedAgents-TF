@@ -5,31 +5,36 @@ data "azurerm_public_ip" "vm_ip" {
   depends_on = [azurerm_linux_virtual_machine.main]
 }
 
-# Create a null_resource that waits for VM and public IP
+# Create a null_resource that waits for VM
 resource "null_resource" "setup_devops_agents" {
-  depends_on = [
-    azurerm_linux_virtual_machine.main,
-    data.azurerm_public_ip.vm_ip
-  ]
+  depends_on = [azurerm_linux_virtual_machine.main]
 
   connection {
     type     = "ssh"
-    user     = azurerm_linux_virtual_machine.main.admin_username
-    password = azurerm_linux_virtual_machine.main.admin_password
+    user     = "devopsadmin"
+    password = var.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
-    timeout  = "15m"
   }
 
+  # Upload the script file
+  provisioner "file" {
+    source      = "./agent-setup.sh"
+    destination = "/tmp/agent-config.sh"
+  }
+
+  # Execute the setup
   provisioner "remote-exec" {
-  inline = [
-    "echo 'Updating system packages...'",
-    "sudo apt update && sudo apt upgrade -y",
-    "echo 'Installing required packages...'",
-    "sudo install -y curl wget unzip software-properties-common",
-    "echo 'Downloading agent configuration script...'",
-    "wget -O /tmp/agent-config.sh 'https://dev.azure.com/bseforgedevops/TestScripts-Forge/_git/Test-Client-VM-AgentPool?path=/agent-setup.sh&download=true'",
-    "sudo chmod +x /tmp/agent-config.sh",
-    "sudo /tmp/agent-config.sh"
-   ]
+    inline = [
+      "set -e",
+      "echo 'Updating system packages...'",
+      "sudo apt-get update",
+      "echo 'Installing required packages...'",
+      "sudo apt-get install -y curl wget unzip", 
+      "echo 'Downloaded script, setting permissions...'",
+      "sudo chmod +x /tmp/agent-config.sh",
+      "echo 'Starting agent configuration...'",
+      "sudo /tmp/agent-config.sh",
+      "echo 'Agent configuration completed successfully!'"
+    ]
   }
 }
