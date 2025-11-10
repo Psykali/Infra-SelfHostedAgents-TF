@@ -11,22 +11,6 @@ resource "null_resource" "setup_devops_agents" {
     script_hash   = filesha256("${path.module}/agent-setup.sh")
   }
 
-  # Wait for SSH to be available first - FIXED VERSION
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Waiting for VM to be ready..."
-      sleep 30
-      until nc -z ${data.azurerm_public_ip.vm_ip.ip_address} 22; do
-        echo "Waiting for SSH on ${data.azurerm_public_ip.vm_ip.ip_address}:22..."
-        sleep 10
-      done
-      echo "VM is ready for SSH connections"
-    EOT
-    
-    # Use Unix-style interpreter
-    interpreter = ["/bin/bash", "-c"]
-  }
-
   # Connection configuration for SSH
   connection {
     type     = "ssh"
