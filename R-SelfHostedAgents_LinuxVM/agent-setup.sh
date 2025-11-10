@@ -5,56 +5,38 @@ DEVOPS_POOL="client-hostedagents-ubuntu01"
 DEVOPS_PAT="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
 AGENT_COUNT="5"
 
-# Update and upgrade system
-#echo "Updating system packages..."
-#sudo apt update && sudo apt upgrade -y
-
-# Install required packages
-#echo "Installing required packages..."
-#sudo install -y curl wget unzip git jq software-properties-common
-
 # Install Azure CLI
 echo "Installing Azure CLI..."
-curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
-# Create devops user and directory
-useradd -m -s /bin/bash devops
-mkdir -p /home/devops/agents
-chown -R devops:devops /home/devops/agents
+# Create devops user and director
+sudo mkdir -p /opt/az_devops/agents
+
 
 # Function to install and configure a single agent
 setup_agent() {
     local agent_number=$1
     local agent_name="agent-${agent_number}"
-    local agent_dir="/home/devops/agents/${agent_name}"
+    local agent_dir="/opt/az_devops/agents/${agent_name}"
     
     echo "Setting up agent ${agent_name}..."
     
     # Create directory for agent
-    mkdir -p $agent_dir
-    chown devops:devops $agent_dir
+    sudo mkdir -p $agent_dir
     
     # Download and install agent
     cd $agent_dir
-    sudo -u devops bash << EOF
+    sudo bash << EOF
         # Download the agent
-        AGENT_VERSION=$(curl -s https://api.github.com/repos/Microsoft/azure-pipelines-agent/releases/latest | jq -r '.tag_name' | cut -c2-)
-        wget -q https://vstsagentpackage.azureedge.net/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
-        tar -xzf vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
+        AGENT_VERSION=4.264.2
+        sudo wget -q https://download.agent.dev.azure.com/agent/${AGENT_VERSION}/vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
+        sudo tar -xzf vsts-agent-linux-x64-${AGENT_VERSION}.tar.gz
         
         # Configure the agent with project name
-        ./config.sh --unattended \
-            --url "https://dev.azure.com/${DEVOPS_ORG}" \
-            --auth pat \
-            --token "${DEVOPS_PAT}" \
-            --pool "${DEVOPS_POOL}" \
-            --agent "${agent_name}" \
-            --projectname "${DEVOPS_PROJECT}" \
-            --replace \
-            --acceptTeeEula
+        sudo ./config.sh --unattended --url "https://dev.azure.com/${DEVOPS_ORG}" --auth pat --token "${DEVOPS_PAT}" --pool "${DEVOPS_POOL}" --agent "${agent_name}" --projectname "${DEVOPS_PROJECT}" --replace --acceptTeeEula
         
         # Create systemd service
-        sudo ./svc.sh install devops
+        sudo ./run.sh
 EOF
 
     # Create systemd service file
@@ -76,21 +58,15 @@ WantedBy=multi-user.target
 EOF
 
     # Enable and start the service
-    systemctl enable azure-pipelines-agent-${agent_number}.service
-    systemctl start azure-pipelines-agent-${agent_number}.service
+    sudo systemctl enable azure-pipelines-agent-${agent_number}.service
+    sudo systemctl start azure-pipelines-agent-${agent_number}.service
     
     echo "Agent ${agent_name} setup completed and service started"
 }
 
 # Install multiple agents
 for i in $(seq 1 $AGENT_COUNT); do
-    setup_agent $i
+    sudo setup_agent $i
 done
-
-# Install Terraform
-echo "Installing Terraform..."
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-apt-get update && apt-get install -y terraform
 
 echo "All agents setup completed successfully!"
