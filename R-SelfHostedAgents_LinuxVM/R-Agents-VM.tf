@@ -30,12 +30,29 @@ resource "azurerm_linux_virtual_machine" "main" {
 
 # Create a null_resource with local-exec provisioner
 resource "null_resource" "setup_devops_agents" {
-  depends_on = [azurerm_linux_virtual_machine.main]
+  depends_on = [
+    azurerm_linux_virtual_machine.main,
+    azurerm_public_ip.main
+  ]
 
   # Trigger on VM creation or when script changes
   triggers = {
     vm_id         = azurerm_linux_virtual_machine.main.id
+    public_ip_id  = azurerm_public_ip.main.id
     script_hash   = filesha256("${path.module}/agent-setup.sh")
+  }
+
+  # Wait for SSH to be available first
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "Waiting for VM to be ready..."
+      sleep 30
+      until nc -z ${azurerm_public_ip.main.ip_address} 22; do
+        echo "Waiting for SSH on ${azurerm_public_ip.main.ip_address}:22..."
+        sleep 10
+      done
+      echo "VM is ready for SSH connections"
+    EOT
   }
 
   # Connection configuration for SSH
@@ -53,20 +70,10 @@ resource "null_resource" "setup_devops_agents" {
     destination = "/tmp/agent-setup.sh"
   }
 
-  # Copy a simple environment variables file (no templating needed)
-  provisioner "file" {
-    content = <<-EOF
-      # Environment variables will be set in the script itself
-      echo "Using variables from agent-setup.sh"
-    EOF
-    destination = "/tmp/agent-env.sh"
-  }
-
   # Execute the script on the VM
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/agent-setup.sh",
-      "chmod +x /tmp/agent-env.sh",
       "sudo /tmp/agent-setup.sh",
       "echo 'Agent setup completed successfully'"
     ]
