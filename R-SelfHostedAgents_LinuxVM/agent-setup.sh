@@ -6,19 +6,12 @@ DEVOPS_PAT="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2
 AGENT_COUNT="5"
 
 # Update and upgrade system
-echo "Updating system packages..."
-apt-get update
-apt-get upgrade -y
+#echo "Updating system packages..."
+#sudo apt update && sudo apt upgrade -y
 
 # Install required packages
-echo "Installing required packages..."
-apt-get install -y \
-    curl \
-    wget \
-    unzip \
-    git \
-    jq \
-    software-properties-common
+#echo "Installing required packages..."
+#sudo install -y curl wget unzip git jq software-properties-common
 
 # Install Azure CLI
 echo "Installing Azure CLI..."
