@@ -22,25 +22,25 @@ resource "null_resource" "setup_devops_agents" {
     destination = "agent-config.sh"
   }
 
-  provisioner "remote-exec" { 
+  provisioner "remote-exec" {
   inline = [
-    # Update and upgrade system
+    # Update system
     "sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
     
     # Install dependencies
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
     
+    # Set permissions on the uploaded file
+    "sudo chmod +x /home/devopsadmin/agent-setup.sh",
+    
     # Install Azure CLI
     "sudo curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
     
-    # Create and set up agent-setup.sh in the home directory
-    "cat > /home/devopsadmin/agent-setup.sh << 'EOF'",
-    file("${path.module}/agent-setup.sh"),
-    "EOF",
+    # Wait for Azure CLI installation to complete
+    "sleep 10",
     
-    # Set permissions and run from the correct location
-    "sudo chmod +x /home/devopsadmin/agent-setup.sh",
-    "cd /home/devopsadmin && sudo ./agent-setup.sh"
+    # Run the setup script
+    "sudo /home/devopsadmin/agent-setup.sh"
     ]
-  }
+  } 
 }
