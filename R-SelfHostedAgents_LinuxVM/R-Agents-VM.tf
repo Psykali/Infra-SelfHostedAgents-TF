@@ -43,10 +43,7 @@ data "azurerm_public_ip" "vm_ip" {
   name                = azurerm_public_ip.main.name
   resource_group_name = azurerm_resource_group.network_rg.name
   
-  depends_on = [
-    azurerm_linux_virtual_machine.main,
-    azurerm_public_ip.main
-    ]
+  depends_on = [azurerm_linux_virtual_machine.main]
 }
 
 # Create a null_resource with local-exec provisioner
@@ -60,22 +57,6 @@ resource "null_resource" "setup_devops_agents" {
     vm_id         = azurerm_linux_virtual_machine.main.id
     public_ip     = data.azurerm_public_ip.vm_ip.ip_address
     script_hash   = filesha256("${path.module}/agent-setup.sh")
-  }
-
-  # Wait for SSH to be available first - FIXED VERSION
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Waiting for VM to be ready..."
-      sleep 30
-      until nc -z ${data.azurerm_public_ip.vm_ip.ip_address} 22; do
-        echo "Waiting for SSH on ${data.azurerm_public_ip.vm_ip.ip_address}:22..."
-        sleep 10
-      done
-      echo "VM is ready for SSH connections"
-    EOT
-    
-    # Use Unix-style interpreter
-    interpreter = ["/bin/bash", "-c"]
   }
 
   # Connection configuration for SSH
