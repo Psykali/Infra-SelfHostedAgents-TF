@@ -25,11 +25,11 @@ resource "null_resource" "setup_devops_agents" {
   provisioner "remote-exec" {
     inline = [
       "echo 'Checking if file was uploaded...'",
-      "ls -la /tmp/agent-config.sh",
+      "ls -la /home/devopsadmin/agent-config.sh",
       "echo 'Setting permissions...'",
-      "sudo chmod +x /tmp/agent-config.sh",
+      "sudo chmod +x /home/devopsadmin/agent-config.sh",
       "echo 'Starting agent configuration...'",
-      "sudo /tmp/agent-config.sh"
+      "sudo /home/devopsadmin/agent-config.sh"
     ]
   }
 }
