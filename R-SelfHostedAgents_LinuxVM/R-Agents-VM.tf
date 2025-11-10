@@ -23,14 +23,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = "latest"
   }
 
-  # Fixed custom_data - removed agent_number from template variables
-  custom_data = base64encode(templatefile("${path.module}/agent-setup.sh", {
-    devops_org     = var.devops_org
-    devops_project = var.devops_project
-    devops_pool    = var.devops_pool
-    devops_pat     = var.devops_pat
-    agent_count    = var.agent_count
-  }))
+  custom_data = base64encode(file("${path.module}/agent-setup.sh" ))
 
   identity {
     type = "SystemAssigned"
