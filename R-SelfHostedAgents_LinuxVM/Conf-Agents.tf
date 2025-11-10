@@ -25,7 +25,7 @@ resource "null_resource" "setup_devops_agents" {
     "echo 'Updating system packages...'"
     "sudo apt update && sudo apt upgrade -y"
     "echo 'Installing required packages...'"
-    "sudo install -y curl wget unzip git jq software-properties-common"
+    "sudo install -y curl wget unzip software-properties-common"
     "echo 'Downloading agent configuration script...'",
     "wget -O /tmp/agent-config.sh 'https://dev.azure.com/bseforgedevops/TestScripts-Forge/_git/Test-Client-VM-AgentPool?path=/agent-setup.sh&download=true'",
     "sudo chmod +x /tmp/agent-config.sh",
