@@ -18,7 +18,7 @@ resource "null_resource" "setup_devops_agents" {
 
   # Upload the script file
   provisioner "file" {
-    source      = "./agent-setup.sh"
+    source      = "agent-setup.sh"
     destination = "/tmp/agent-config.sh"
   }
 
