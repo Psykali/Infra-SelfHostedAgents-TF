@@ -31,7 +31,7 @@ resource "null_resource" "setup_devops_agents" {
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
     
     # Set permissions on the uploaded file
-    "sudo chmod +x /home/devopsadmin/agent-setup.sh",
+    "cd /home/devopsadmin && sudo chmod +x agent-setup.sh",
     
     # Install Azure CLI
     "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
@@ -40,7 +40,7 @@ resource "null_resource" "setup_devops_agents" {
     "sleep 10",
     
     # Run the setup script
-    "sudo /home/devopsadmin/agent-setup.sh"
+    "sudo /bin/bash agent-setup.sh"
     ]
   } 
 }
