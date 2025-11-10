@@ -19,10 +19,10 @@ resource "null_resource" "setup_devops_agents" {
 
   connection {
     type     = "ssh"
-    user     = "devopsadmin"
-    password = "FGHJfghj1234"
+    user     = azurerm_linux_virtual_machine.main.admin_username
+    password = azurerm_linux_virtual_machine.main.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
-    timeout  = "15m"
+    timeout  = "25m"
   }
 
   # Create the script directly on the VM
