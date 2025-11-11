@@ -1,6 +1,6 @@
 variable "allowed_ip" {
   description = "Your allowed IP address"
-  default     = "176.147.43.231"
+  default     = ""
 }
 
 # Storage Account with public access enabled (for firewall rules to work)
