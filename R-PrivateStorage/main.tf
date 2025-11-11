@@ -10,12 +10,6 @@ resource "azurerm_subnet" "private_endpoint" {
   private_link_service_network_policies = "Disabled"
 }
 
-# Resource Group for Storage
-resource "azurerm_resource_group" "storage" {
-  name     = var.storage_rg_name
-  location = var.location
-}
-
 resource "azurerm_storage_account" "private" {
   name                     = var.private_storage_name
   resource_group_name      = azurerm_resource_group.storage.name
