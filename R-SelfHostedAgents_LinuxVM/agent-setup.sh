@@ -1,5 +1,6 @@
 #!/bin/bash
-## set -e
+# set -e 
+
 # =============================================
 # CONFIGURATION VARIABLES
 # =============================================
@@ -167,6 +168,22 @@ show_status() {
     done
 }
 
+start_all_services() {
+    echo "Starting agent services..."
+    for i in $(seq 1 $AGENT_COUNT); do
+        local service_name="$SERVICE_PREFIX-$i"
+        if [ -f "/etc/systemd/system/$service_name.service" ]; then
+            if start_agent_service $i; then
+                echo "✓ Agent $i service started"
+            else
+                echo "⚠️  Failed to start service for agent $i"
+            fi
+        else
+            echo "⚠️  No service file for agent $i - skipping start"
+        fi
+    done
+}
+
 # =============================================
 # MAIN EXECUTION
 # =============================================
@@ -202,19 +219,7 @@ for i in $(seq 1 $AGENT_COUNT); do
 done
 
 # Start all services that were created
-echo "Starting agent services..."
-for i in $(seq 1 $AGENT_COUNT); do
-    local service_name="$SERVICE_PREFIX-$i"
-    if [ -f "/etc/systemd/system/$service_name.service" ]; then
-        if start_agent_service $i; then
-            echo "✓ Agent $i service started"
-        else
-            echo "⚠️  Failed to start service for agent $i"
-        fi
-    else
-        echo "⚠️  No service file for agent $i - skipping start"
-    fi
-done
+start_all_services
 
 # Show final status
 show_status
