@@ -1,55 +1,19 @@
-# Variables
-variable "private_storage_name" {
-  description = "Name of the storage account"
-  default     = "clienttfprivstacc"
-}
-
-variable "storage_rg_name" {
-  description = "Name of the resource group for storage"
-  default     = "rg-client-tf-storage"
-}
-
-variable "location" {
-  description = "Azure region"
-  default     = "francecentral"
-}
-
-variable "tfstate_container_name" {
-  description = "tfstate_container_name"
-  default     = "client_tfstate"
-}
-
-variable "private_endpoint_name" {
-  description = "Private Endpoint Name"
-  default     = "client-storage-private-endpoint"
-}
-
-variable "private_endpoint_connection_name" {
-  description = "Private Endpoint Connection Name"
-  default     = "client-storage-private-connection"
-}
-
-variable "private_endpoint_subnet_name" {
-  description = "Name of the subnet for private endpoint"
-  default     = "private-endpoint-subnet"  # You'll need to create this subnet
-}
-
 # Data sources to reference existing networking resources
 data "azurerm_virtual_network" "main" {
-  name                = "client-devops-agent-vnet"  # Use your actual VNet name from stage 1
-  resource_group_name = "client-devops-agents-network-rg"  # Use your actual network RG name
+  name                = "client-devops-agent-vnet"  # Use actual VNet name from stage 1
+  resource_group_name = "client-devops-agents-network-rg" 
 }
 
 data "azurerm_subnet" "main" {
-  name                 = "client-devops-agent-subnet"  # Use your actual subnet name from stage 1
+  name                 = "client-devops-agent-subnet"  # Use actual subnet name from stage 1
   virtual_network_name = data.azurerm_virtual_network.main.name
-  resource_group_name  = "client-devops-agents-network-rg"  # Use your actual network RG name
+  resource_group_name  = "client-devops-agents-network-rg" 
 }
 
 # Create a dedicated subnet for private endpoints (best practice)
 resource "azurerm_subnet" "private_endpoint" {
   name                 = var.private_endpoint_subnet_name
-  resource_group_name  = "client-devops-agents-network-rg"  # Use your actual network RG name
+  resource_group_name  = "client-devops-agents-network-rg"  
   virtual_network_name = data.azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.3.0/24"]  # Different subnet than the VM subnet
   
@@ -90,7 +54,7 @@ resource "azurerm_private_endpoint" "storage" {
   name                = var.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
-  subnet_id           = azurerm_subnet.private_endpoint.id  # Now using the created subnet
+  subnet_id           = azurerm_subnet.private_endpoint.id  
 
   private_service_connection {
     name                           = var.private_endpoint_connection_name
