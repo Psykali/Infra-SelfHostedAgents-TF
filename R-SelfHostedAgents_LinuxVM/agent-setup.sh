@@ -12,7 +12,7 @@ AGENT_COUNT=5
 AGENTS_BASE_DIR="/opt/azure-devops-agents"
 AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
 AGENT_VERSION="4.261.0"
-SERVICE_USER="$CLIENT_NAME-devopsadmin"
+SERVICE_USER="devopsadmin"
 
 # =============================================
 # FUNCTIONS
