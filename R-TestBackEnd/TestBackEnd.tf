@@ -7,6 +7,14 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "azurerm" {
+    resource_group_name  = "client-tfstate-storage-rg"
+    storage_account_name = "clienttfprivstacc"
+    container_name       = "client-tfstate"
+    key                  = "test-resources.tfstate"
+    # Uncomment if using storage account key:
+    # storage_account_key = "your-storage-account-key"
+  }
 }
 
 provider "azurerm" {
