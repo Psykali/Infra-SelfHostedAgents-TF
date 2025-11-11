@@ -24,9 +24,10 @@ resource "null_resource" "setup_devops_agents" {
 
   provisioner "remote-exec" {
   inline = [
-    # Basic system setup
+    # Paquets
     "sudo DEBIAN_FRONTEND=noninteractive apt update -y",
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip curl wget",
+    "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
     
     # Set User without Password
     "echo '${azurerm_linux_virtual_machine.main.admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
@@ -35,10 +36,6 @@ resource "null_resource" "setup_devops_agents" {
     # Fix and prepare the script
     "sed -i 's/\r$//' /home/devopsadmin/agent-setup.sh",
     "sudo chmod +x /home/devopsadmin/agent-setup.sh",
-    
-    # Test basic connectivity first
-    "echo 'Testing network connectivity...'",
-    "curl -I https://github.com",
     
     # Run script with error output
     "cd /home/devopsadmin && ./agent-setup.sh 2>&1 || echo \"Script failed with exit code: $?\""
