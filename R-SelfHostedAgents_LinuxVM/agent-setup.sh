@@ -38,14 +38,16 @@ setup_agent() {
     echo "=== Setting up Agent $agent_num ==="
 
     # Create agent directory
-    mkdir -p "$agent_dir"
+    sudo mkdir -p "$agent_dir"
+    sudo chown "$SERVICE_USER:$SERVICE_USER" "$agent_dir"
     echo "✓ Created directory: $agent_dir"
 
     # Extract agent files if not already present
     if [ ! -f "$agent_dir/config.sh" ]; then
         echo "Extracting agent files..."
         tar -zxf "/tmp/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" -C "$agent_dir"
-        chmod +x "$agent_dir"/*.sh
+        sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$agent_dir"
+        sudo chmod +x "$agent_dir"/*.sh
         echo "✓ Agent files extracted"
     fi
 
@@ -101,7 +103,7 @@ Wants=network.target
 Type=simple
 User=$SERVICE_USER
 WorkingDirectory=$agent_dir
-ExecStart=$agent_dir/runsvc.sh
+ExecStart=$agent_dir/run.sh  # CHANGED FROM runsvc.sh TO run.sh
 Restart=always
 RestartSec=10
 StartLimitInterval=60
