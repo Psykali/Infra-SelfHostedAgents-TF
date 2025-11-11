@@ -1,12 +1,11 @@
-
-#  Variables
+# Variables
 variable "private_storage_name" {
-  description = "Name of the resource group"
+  description = "Name of the storage account"
   default     = "clienttfprivstacc"
 }
 
-variable "rg_name" {
-  description = "Name of the resource group"
+variable "storage_rg_name" {
+  description = "Name of the resource group for storage"
   default     = "rg-client-tf-storage"
 }
 
@@ -26,14 +25,42 @@ variable "private_endpoint_name" {
 }
 
 variable "private_endpoint_connection_name" {
-  description = "Private Endpoint Name"
+  description = "Private Endpoint Connection Name"
   default     = "client-storage-private-connection"
 }
 
+variable "private_endpoint_subnet_name" {
+  description = "Name of the subnet for private endpoint"
+  default     = "private-endpoint-subnet"  # You'll need to create this subnet
+}
 
-# Resource Group
+# Data sources to reference existing networking resources
+data "azurerm_virtual_network" "main" {
+  name                = "client-devops-agent-vnet"  # Use your actual VNet name from stage 1
+  resource_group_name = "client-devops-agents-network-rg"  # Use your actual network RG name
+}
+
+data "azurerm_subnet" "main" {
+  name                 = "client-devops-agent-subnet"  # Use your actual subnet name from stage 1
+  virtual_network_name = data.azurerm_virtual_network.main.name
+  resource_group_name  = "client-devops-agents-network-rg"  # Use your actual network RG name
+}
+
+# Create a dedicated subnet for private endpoints (best practice)
+resource "azurerm_subnet" "private_endpoint" {
+  name                 = var.private_endpoint_subnet_name
+  resource_group_name  = "client-devops-agents-network-rg"  # Use your actual network RG name
+  virtual_network_name = data.azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.3.0/24"]  # Different subnet than the VM subnet
+  
+  # Required for private endpoints
+  private_endpoint_network_policies = "Disabled"
+  private_link_service_network_policies = "Disabled"
+}
+
+# Resource Group for Storage
 resource "azurerm_resource_group" "storage" {
-  name     = var.rg_name
+  name     = var.storage_rg_name
   location = var.location
 }
 
@@ -63,7 +90,7 @@ resource "azurerm_private_endpoint" "storage" {
   name                = var.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
-  subnet_id           = azurerm_subnet.private_endpoint.id
+  subnet_id           = azurerm_subnet.private_endpoint.id  # Now using the created subnet
 
   private_service_connection {
     name                           = var.private_endpoint_connection_name
@@ -87,7 +114,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "storage" {
   name                  = "storage-dns-link"
   resource_group_name   = azurerm_resource_group.storage.name
   private_dns_zone_name = azurerm_private_dns_zone.blob.name
-  virtual_network_id    = azurerm_virtual_network.storage.id
+  virtual_network_id    = data.azurerm_virtual_network.main.id 
 }
 
 resource "random_string" "suffix" {
