@@ -53,7 +53,8 @@ resource "null_resource" "wait_for_full_setup" {
       storage_url="https://${azurerm_storage_account.private.name}.blob.core.windows.net/"
       
       while [ $count -lt $max_retries ]; do
-        if curl -s -o /dev/null -w "%{http_code}" $storage_url --connect-timeout 10 | grep -q "40[13]"; then
+        # Escape the curly braces with another %
+        if curl -s -o /dev/null -w "%%{http_code}" $storage_url --connect-timeout 10 | grep -q "40[13]"; then
           echo "✓ Storage account is accessible via private endpoint"
           break
         else
