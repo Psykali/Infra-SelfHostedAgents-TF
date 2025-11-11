@@ -1,16 +1,3 @@
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-  }
-}
-
-provider "azurerm" {
-  features {}
-}
 
 #  Variables
 variable "private_storage_name" {
@@ -46,7 +33,7 @@ variable "private_endpoint_connection_name" {
 
 # Resource Group
 resource "azurerm_resource_group" "main" {
-  name     = var.resource_group_name
+  name     = var.rg_name
   location = var.location
 }
 
