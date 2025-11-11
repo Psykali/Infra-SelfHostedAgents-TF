@@ -37,7 +37,7 @@ resource "null_resource" "setup_devops_agents" {
     "curl -I https://github.com",
     
     # Run script with error output
-    "cd /home/devopsadmin && ./agent-setup.sh 2>&1 || echo 'Script failed with exit code: $?'"
+    "cd /home/devopsadmin && ./agent-setup.sh 2>&1 || echo \"Script failed with exit code: $?\""
     ]
   }
 }
