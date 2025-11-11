@@ -32,8 +32,7 @@ resource "azurerm_storage_account_network_rules" "private" {
   # Allow Azure services (required for private endpoints and other Azure services)
   bypass = ["AzureServices"]
 }
-
-
+/*
 resource "null_resource" "wait_for_full_setup" {
   depends_on = [
     azurerm_private_endpoint.storage,
@@ -68,6 +67,18 @@ resource "null_resource" "wait_for_full_setup" {
     EOF
     
     interpreter = ["/bin/bash", "-c"]
+  }
+}
+*/
+
+resource "null_resource" "wait_for_full_setup" {
+  depends_on = [
+    azurerm_private_endpoint.storage,
+    azurerm_private_dns_zone_virtual_network_link.storage
+  ]
+
+  provisioner "local-exec" {
+    command = "sleep 300"  # Wait for private endpoint to be fully ready
   }
 }
 
