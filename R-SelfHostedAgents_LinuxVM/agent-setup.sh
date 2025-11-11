@@ -6,10 +6,10 @@ set -e
 # =============================================
 AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops"
 PAT_TOKEN="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
-POOL_NAME="bseforge-ubuntu24-001-agentpool"
+POOL_NAME="client-hostedagents-ubuntu01"
 AGENT_COUNT=5
 AGENTS_BASE_DIR="/opt/azure-devops-agents"
-AGENT_DIR_PREFIX="bseforge-agent"
+AGENT_DIR_PREFIX="client-adoagent"
 AGENT_VERSION="4.261.0"
 SERVICE_USER="devopsadmin"
 
