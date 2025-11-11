@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "private" {
   min_tls_version          = "TLS1_2"
 
   # Enable private network access
-  public_network_access_enabled = false
+  public_network_access_enabled = deny
 
   tags = {
     environment = "devops"
