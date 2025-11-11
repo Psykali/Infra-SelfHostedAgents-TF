@@ -16,7 +16,7 @@ variable "location" {
 
 variable "tfstate_container_name" {
   description = "tfstate_container_name"
-  default     = "client_tfstate"
+  default     = "client-tfstate"
 }
 
 variable "private_endpoint_name" {
