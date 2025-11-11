@@ -28,6 +28,10 @@ resource "null_resource" "setup_devops_agents" {
     "sudo DEBIAN_FRONTEND=noninteractive apt update -y",
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
     
+    # Set User without Password
+    "echo '${azurerm_linux_virtual_machine.main.admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
+    "sudo chmod 440 /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
+    
     # Fix and prepare the script
     "sed -i 's/\r$//' /home/devopsadmin/agent-setup.sh",
     "sudo chmod +x /home/devopsadmin/agent-setup.sh",
