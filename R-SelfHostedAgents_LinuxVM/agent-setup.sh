@@ -33,7 +33,7 @@ download_agent_package() {
 setup_agent() {
     local agent_num=$1
     local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
-    local agent_name="$AGENT_VERSION-adoagent-$agent_num"
+    local agent_name="$SERVICE_PREFIX-$agent_num"
 
     echo "=== Setting up Agent $agent_num ==="
 
