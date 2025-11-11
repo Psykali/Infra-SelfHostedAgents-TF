@@ -4,14 +4,15 @@ set -e
 # =============================================
 # CONFIGURATION VARIABLES
 # =============================================
+CLIENT_NAME="client"
 AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops"
 PAT_TOKEN="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
-POOL_NAME="client-hostedagents-ubuntu01"
+POOL_NAME="$CLIENT_NAME-hostedagents-ubuntu01"
 AGENT_COUNT=5
 AGENTS_BASE_DIR="/opt/azure-devops-agents"
-AGENT_DIR_PREFIX="client-adoagent"
+AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
 AGENT_VERSION="4.261.0"
-SERVICE_USER="devopsadmin"
+SERVICE_USER="$CLIENT_NAME-devopsadmin"
 
 # =============================================
 # FUNCTIONS
