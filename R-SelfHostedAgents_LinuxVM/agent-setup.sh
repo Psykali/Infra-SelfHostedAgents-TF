@@ -32,7 +32,7 @@ download_agent_package() {
 setup_agent() {
     local agent_num=$1
     local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
-    local agent_name="bseforge-ubuntu-agent-$agent_num"
+    local agent_name="$AGENT_VERSION-adoagent-$agent_num"
 
     echo "=== Setting up Agent $agent_num ==="
 
@@ -79,12 +79,12 @@ setup_agent() {
 create_systemd_service() {
     local agent_num=$1
     local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
-    local service_name="azdevops-agent-$agent_num"
+    local service_name="$AGENT_VERSION-agent-$agent_num"
     local service_file="/etc/systemd/system/$service_name.service"
 
     # Check if agent directory exists and has required files
-    if [ ! -f "$agent_dir/runsvc.sh" ]; then
-        echo "⚠️  Skipping service creation for agent $agent_num: runsvc.sh not found"
+    if [ ! -f "$agent_dir/run.sh" ]; then
+        echo "⚠️  Skipping service creation for agent $agent_num: run.sh not found"
         return 1
     fi
 
