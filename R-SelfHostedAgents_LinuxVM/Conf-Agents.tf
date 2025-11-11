@@ -24,25 +24,20 @@ resource "null_resource" "setup_devops_agents" {
 
   provisioner "remote-exec" {
   inline = [
-    # Update system
-    "sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y",
-    
-    # Install dependencies
+    # Basic system setup
+    "sudo DEBIAN_FRONTEND=noninteractive apt update -y",
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
-
-    "sudo sed -i 's/\r$//' /home/devopsadmin/agent-setup.sh",
     
-    # Set permissions on the uploaded file
-    "cd /home/devopsadmin && sudo chmod +x agent-setup.sh",
+    # Fix and prepare the script
+    "sed -i 's/\r$//' /home/devopsadmin/agent-setup.sh",
+    "sudo chmod +x /home/devopsadmin/agent-setup.sh",
     
-    # Install Azure CLI
-    "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
+    # Test basic connectivity first
+    "echo 'Testing network connectivity...'",
+    "curl -I https://github.com",
     
-    # Wait for Azure CLI installation to complete
-    "sleep 10",
-    
-    # Run the setup script
-    "sudo /bin/bash agent-setup.sh"
+    # Run script with error output
+    "cd /home/devopsadmin && ./agent-setup.sh 2>&1 || echo 'Script failed with exit code: $?'"
     ]
-  } 
+  }
 }
