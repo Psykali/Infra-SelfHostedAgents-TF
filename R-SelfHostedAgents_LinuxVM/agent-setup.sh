@@ -13,6 +13,7 @@ AGENTS_BASE_DIR="/opt/azure-devops-agents"
 AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
 AGENT_VERSION="4.261.0"
 SERVICE_USER="devopsadmin"
+SERVICE_PREFIX="$CLIENT_NAME-adoagent"
 
 # =============================================
 # FUNCTIONS
@@ -79,7 +80,7 @@ setup_agent() {
 create_systemd_service() {
     local agent_num=$1
     local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$agent_num"
-    local service_name="$AGENT_VERSION-agent-$agent_num"
+    local service_name="$SERVICE_PREFIX-$agent_num"  
     local service_file="/etc/systemd/system/$service_name.service"
 
     # Check if agent directory exists and has required files
@@ -121,7 +122,7 @@ EOF
 
 start_agent_service() {
     local agent_num=$1
-    local service_name="azdevops-agent-$agent_num"
+    local service_name="$SERVICE_PREFIX-$agent_num"  
 
     if sudo systemctl start "$service_name"; then
         echo "✓ Started service: $service_name"
@@ -138,7 +139,7 @@ show_status() {
     echo "============================================="
     
     for i in $(seq 1 $AGENT_COUNT); do
-        local service_name="azdevops-agent-$i"
+        local service_name="$SERVICE_PREFIX-$i"  
         local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$i"
         
         echo "Agent $i:"
@@ -195,7 +196,7 @@ show_status
 echo "============================================="
 echo "SETUP COMPLETED: $successful_agents/$AGENT_COUNT agents configured"
 echo "Agents are installed in: $AGENTS_BASE_DIR"
-echo "Systemd services: azdevops-agent-1 through azdevops-agent-$AGENT_COUNT"
-echo "Check status: systemctl status azdevops-agent-*"
-echo "View logs: journalctl -u azdevops-agent-1 -f"
+echo "Systemd services: $SERVICE_PREFIX-1 through $SERVICE_PREFIX-$AGENT_COUNT"
+echo "Check status: systemctl status $SERVICE_PREFIX-*"
+echo "View logs: journalctl -u $SERVICE_PREFIX-1 -f"
 echo "============================================="
