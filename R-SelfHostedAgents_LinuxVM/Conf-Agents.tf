@@ -29,6 +29,8 @@ resource "null_resource" "setup_devops_agents" {
     
     # Install dependencies
     "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
+
+    "sudo sed -i 's/\r$//' /home/devopsadmin/agent-setup.sh",
     
     # Set permissions on the uploaded file
     "cd /home/devopsadmin && sudo chmod +x agent-setup.sh",
