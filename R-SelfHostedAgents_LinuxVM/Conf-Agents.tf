@@ -23,7 +23,12 @@ resource "null_resource" "setup_devops_agents" {
   }
 
   provisioner "remote-exec" {
-  inline = [  
+  inline = [
+    # Paquets
+    "sudo DEBIAN_FRONTEND=noninteractive apt update -y",
+    "sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip curl wget",
+    "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash",
+    
     # Set User without Password
     "echo '${azurerm_linux_virtual_machine.main.admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
     "sudo chmod 440 /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
