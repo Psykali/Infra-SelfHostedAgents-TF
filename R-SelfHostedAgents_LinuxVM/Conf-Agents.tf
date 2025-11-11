@@ -26,7 +26,7 @@ resource "null_resource" "setup_devops_agents" {
   inline = [
     # Basic system setup
     "sudo DEBIAN_FRONTEND=noninteractive apt update -y",
-    "sudo DEBIAN_FRONTEND=noninteractive apt install -y curl wget",
+    "sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip curl wget",
     
     # Set User without Password
     "echo '${azurerm_linux_virtual_machine.main.admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/${azurerm_linux_virtual_machine.main.admin_username}",
