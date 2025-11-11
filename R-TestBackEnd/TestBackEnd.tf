@@ -11,7 +11,7 @@ terraform {
     resource_group_name  = "client-tfstate-storage-rg"
     storage_account_name = "clienttfprivstacc"
     container_name       = "client-tfstate"
-    key                  = "test-resources.tfstate"
+    key                  = "client-test-resources.tfstate"
     # Uncomment if using storage account key:
     # storage_account_key = "your-storage-account-key"
   }
@@ -23,7 +23,7 @@ provider "azurerm" {
 
 # Simple test resource group
 resource "azurerm_resource_group" "test" {
-  name     = "rg-client-simple-test"
+  name     = "client-simple-test-rg"
   location = "francecentral"
 
   tags = {
