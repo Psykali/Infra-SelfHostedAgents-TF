@@ -18,4 +18,10 @@ resource "azurerm_storage_container" "tfstate" {
   name                  = var.tfstate_container_name
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
+
+  # Wait for private endpoint to be ready
+  depends_on = [
+      azurerm_private_endpoint.storage,
+      azurerm_storage_account.private
+      ]
 }
