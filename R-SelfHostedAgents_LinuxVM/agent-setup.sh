@@ -21,7 +21,7 @@ download_agent_package() {
     echo "Downloading Azure DevOps agent version $AGENT_VERSION..."
     cd /tmp
     if [ ! -f "vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" ]; then
-        wget -q "https://vstsagentpackage.azureedge.net/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+        wget -q "https://download.agent.dev.azure.com/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
         echo "✓ Agent package downloaded"
     else
         echo "✓ Agent package already exists"
