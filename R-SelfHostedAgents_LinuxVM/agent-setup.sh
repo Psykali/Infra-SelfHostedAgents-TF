@@ -1,6 +1,5 @@
 #!/bin/bash
-# set -e 
-
+# set -e
 # =============================================
 # CONFIGURATION VARIABLES
 # =============================================
@@ -16,7 +15,99 @@ SERVICE_USER="devopsadmin"
 SERVICE_PREFIX="$CLIENT_NAME-adoagent"
 
 # =============================================
-# FUNCTIONS
+# SYSTEM SETUP FUNCTIONS
+# =============================================
+
+update_system_packages() {
+    echo "Updating system packages..."
+    sudo DEBIAN_FRONTEND=noninteractive apt update -y
+    echo "✓ System packages updated"
+}
+
+upgrade_system_packages() {
+    echo "Upgrading system packages..."
+    sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
+    echo "✓ System packages upgraded"
+}
+
+install_required_tools() {
+    echo "Installing required tools: curl, wget, unzip..."
+    
+    # Check and install each tool if not present
+    if ! command -v curl &> /dev/null; then
+        echo "Installing curl..."
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y curl
+        echo "✓ curl installed"
+    else
+        echo "✓ curl already installed"
+    fi
+    
+    if ! command -v wget &> /dev/null; then
+        echo "Installing wget..."
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y wget
+        echo "✓ wget installed"
+    else
+        echo "✓ wget already installed"
+    fi
+    
+    if ! command -v unzip &> /dev/null; then
+        echo "Installing unzip..."
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip
+        echo "✓ unzip installed"
+    else
+        echo "✓ unzip already installed"
+    fi
+}
+
+install_azure_cli() {
+    echo "Checking Azure CLI installation..."
+    
+    if command -v az &> /dev/null; then
+        echo "✓ Azure CLI already installed"
+        az --version | head -1
+        return 0
+    fi
+    
+    echo "Installing Azure CLI..."
+    
+    # Method 1: Official Microsoft script
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    
+    # Verify installation
+    if command -v az &> /dev/null; then
+        echo "✓ Azure CLI installed successfully"
+        az --version | head -1
+        return 0
+    else
+        echo "⚠️  Azure CLI installation may have failed, but continuing..."
+        return 1
+    fi
+}
+
+setup_system() {
+    echo "============================================="
+    echo "SYSTEM SETUP"
+    echo "============================================="
+    
+    update_system_packages
+    echo
+    
+    upgrade_system_packages
+    echo
+    
+    install_required_tools
+    echo
+    
+    install_azure_cli
+    echo
+    
+    echo "✓ System setup completed"
+    echo "============================================="
+    echo
+}
+
+# =============================================
+# AZURE DEVOPS AGENT FUNCTIONS
 # =============================================
 
 download_agent_package() {
@@ -190,6 +281,9 @@ start_all_services() {
 
 echo "Starting Azure DevOps Agents Setup"
 echo "============================================="
+
+# System setup (updates, upgrades, and tool installation)
+setup_system
 
 # Create base directory
 sudo mkdir -p "$AGENTS_BASE_DIR"
