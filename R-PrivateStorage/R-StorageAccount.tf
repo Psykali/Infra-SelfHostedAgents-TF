@@ -34,11 +34,39 @@ resource "azurerm_storage_account_network_rules" "private" {
 }
 
 
-resource "null_resource" "wait_for_private_endpoint" {
-  depends_on = [azurerm_private_endpoint.storage]
+resource "null_resource" "wait_for_full_setup" {
+  depends_on = [
+    azurerm_private_endpoint.storage,
+    azurerm_private_dns_zone_virtual_network_link.storage
+  ]
 
   provisioner "local-exec" {
-    command = "sleep 120"  # Wait 120 seconds for private endpoint to be fully ready
+    command = <<EOF
+      echo "Waiting for private endpoint and DNS to be fully operational..."
+      
+      # Initial wait for Azure to provision
+      sleep 60
+      
+      # Then test connectivity
+      max_retries=20
+      count=0
+      storage_url="https://${azurerm_storage_account.private.name}.blob.core.windows.net/"
+      
+      while [ $count -lt $max_retries ]; do
+        if curl -s -o /dev/null -w "%{http_code}" $storage_url --connect-timeout 10 | grep -q "40[13]"; then
+          echo "✓ Storage account is accessible via private endpoint"
+          break
+        else
+          echo "Testing connectivity... ($((count+1))/$max_retries)"
+          sleep 10
+          count=$((count+1))
+        fi
+      done
+      
+      echo "Private endpoint setup completed"
+    EOF
+    
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
