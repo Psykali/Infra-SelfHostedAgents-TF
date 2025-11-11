@@ -5,9 +5,11 @@ resource "azurerm_subnet" "private_endpoint" {
   virtual_network_name = data.azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.3.0/24"]  # Different subnet than the VM subnet
   
-  private_endpoint_network_policies = "Disabled"
-}
+  service_endpoints = ["Microsoft.Storage"]
 
+  private_endpoint_network_policies = "Disabled"
+  
+}
 
 resource "azurerm_private_endpoint" "storage" {
   name                = var.private_endpoint_name
