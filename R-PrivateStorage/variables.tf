@@ -6,7 +6,7 @@ variable "private_storage_name" {
 
 variable "storage_rg_name" {
   description = "Name of the resource group for storage"
-  default     = "rg-client-tf-storage"
+  default     = "client-tfstate-storage-rg"
 }
 
 variable "location" {
