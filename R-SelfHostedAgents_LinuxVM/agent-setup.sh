@@ -1,6 +1,5 @@
 #!/bin/bash
-set -e
-
+## set -e
 # =============================================
 # CONFIGURATION VARIABLES
 # =============================================
@@ -56,13 +55,13 @@ setup_agent() {
     # Remove existing configuration if present
     if [ -f ".agent" ]; then
         echo "Removing existing configuration..."
-        ./config.sh remove --unattended --auth pat --token "$PAT_TOKEN" > /dev/null 2>&1 || true
+        sudo -u "$SERVICE_USER" ./config.sh remove --unattended --auth pat --token "$PAT_TOKEN" > /dev/null 2>&1 || true
         sleep 1
     fi
 
     # Configure agent
     echo "Configuring agent..."
-    if ./config.sh --unattended \
+    if sudo -u "$SERVICE_USER" ./config.sh --unattended \
         --url "$AZURE_DEVOPS_URL" \
         --auth pat \
         --token "$PAT_TOKEN" \
@@ -93,7 +92,8 @@ create_systemd_service() {
 
     echo "Creating systemd service: $service_name"
 
-    sudo tee "$service_file" > /dev/null << EOF
+    # Create the service file in temp location first
+    cat > /tmp/"$service_name.service" << EOF
 [Unit]
 Description=Azure DevOps Agent $agent_num
 After=network.target
@@ -103,7 +103,7 @@ Wants=network.target
 Type=simple
 User=$SERVICE_USER
 WorkingDirectory=$agent_dir
-ExecStart=$agent_dir/run.sh  # CHANGED FROM runsvc.sh TO run.sh
+ExecStart=$agent_dir/run.sh
 Restart=always
 RestartSec=10
 StartLimitInterval=60
@@ -117,9 +117,12 @@ PrivateTmp=yes
 WantedBy=multi-user.target
 EOF
 
+    # Move with sudo
+    sudo mv /tmp/"$service_name.service" "$service_file"
     sudo systemctl daemon-reload
     sudo systemctl enable "$service_name" > /dev/null 2>&1
     echo "✓ Systemd service created and enabled: $service_name"
+    return 0
 }
 
 start_agent_service() {
@@ -128,9 +131,11 @@ start_agent_service() {
 
     if sudo systemctl start "$service_name"; then
         echo "✓ Started service: $service_name"
+        return 0
     else
         echo "✗ Failed to start service: $service_name"
         sudo systemctl status "$service_name" --no-pager -l | tail -3
+        return 1
     fi
 }
 
@@ -176,20 +181,39 @@ sudo chown "$SERVICE_USER:$SERVICE_USER" "$AGENTS_BASE_DIR"
 # Download agent package
 download_agent_package
 
-# Setup each agent
+# Setup each agent - CONTINUE EVEN IF SOME FAIL
 successful_agents=0
 for i in $(seq 1 $AGENT_COUNT); do
+    echo "Processing Agent $i of $AGENT_COUNT..."
     if setup_agent $i; then
         ((successful_agents++))
-        create_systemd_service $i
+        echo "✓ Agent $i configured"
+        
+        # Try to create service but don't fail the entire script
+        if create_systemd_service $i; then
+            echo "✓ Service created for agent $i"
+        else
+            echo "⚠️  Service creation failed for agent $i (but agent is configured)"
+        fi
+    else
+        echo "✗ Agent $i setup failed"
     fi
-    echo
+    echo "---"
 done
 
-# Start all services
-echo "Starting all agent services..."
+# Start all services that were created
+echo "Starting agent services..."
 for i in $(seq 1 $AGENT_COUNT); do
-    start_agent_service $i
+    local service_name="$SERVICE_PREFIX-$i"
+    if [ -f "/etc/systemd/system/$service_name.service" ]; then
+        if start_agent_service $i; then
+            echo "✓ Agent $i service started"
+        else
+            echo "⚠️  Failed to start service for agent $i"
+        fi
+    else
+        echo "⚠️  No service file for agent $i - skipping start"
+    fi
 done
 
 # Show final status
