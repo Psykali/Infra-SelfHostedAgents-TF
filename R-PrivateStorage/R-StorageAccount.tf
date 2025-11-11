@@ -76,5 +76,5 @@ resource "azurerm_storage_container" "tfstate" {
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
 
-  depends_on = [null_resource.wait_for_private_endpoint]
+  depends_on = [null_resource.wait_for_full_setup]
 }
