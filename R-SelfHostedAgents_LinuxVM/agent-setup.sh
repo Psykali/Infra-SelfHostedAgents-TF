@@ -20,7 +20,7 @@ SERVICE_PREFIX="$CLIENT_NAME-adoagent"
 
 update_system_packages() {
     echo "Updating system packages..."
-    sudo DEBIAN_FRONTEND=noninteractive apt update -y
+    sudo DEBIAN_FRONTEND=noninteractive apt update
     echo "✓ System packages updated"
 }
 
