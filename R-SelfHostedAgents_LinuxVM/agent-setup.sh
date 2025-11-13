@@ -36,7 +36,7 @@ install_required_tools() {
     # Check and install each tool if not present
     if ! command -v curl &> /dev/null; then
         echo "Installing curl..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install -y curl
+        sudo DEBIAN_FRONTEND=noninteractive apt install curl -y
         echo "✓ curl installed"
     else
         echo "✓ curl already installed"
@@ -44,7 +44,7 @@ install_required_tools() {
     
     if ! command -v wget &> /dev/null; then
         echo "Installing wget..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install -y wget
+        sudo DEBIAN_FRONTEND=noninteractive apt install wget -y
         echo "✓ wget installed"
     else
         echo "✓ wget already installed"
@@ -52,7 +52,7 @@ install_required_tools() {
     
     if ! command -v unzip &> /dev/null; then
         echo "Installing unzip..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip
+        sudo DEBIAN_FRONTEND=noninteractive apt install unzip -y
         echo "✓ unzip installed"
     else
         echo "✓ unzip already installed"
