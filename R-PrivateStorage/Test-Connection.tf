@@ -9,12 +9,20 @@ data "azurerm_storage_account" "verification" {
   ]
 }
 
+resource "null_resource" "verifications" {
+  depends_on = [
+    azurerm_storage_account.verification
+  ]
+
+  provisioner "local-exec" {
+    command = "sleep 300"  # Wait for private endpoint to be fully ready
+  }
+}
+
 # Simple test that outputs success message
 resource "null_resource" "test_access_simple" {
   depends_on = [
-    azurerm_storage_container.tfstate,
-    azurerm_private_endpoint.storage,
-    null_resource.wait_for_full_setup
+    null_resource.verifications
   ]
 
   provisioner "local-exec" {
