@@ -15,11 +15,10 @@ resource "null_resource" "verifications" {
   ]
 
   provisioner "local-exec" {
-    command = "sleep 300"  # Wait for private endpoint to be fully ready
+    command = "sleep 120"  # Wait 2 mins
   }
 }
 
-# Simple test that outputs success message
 resource "null_resource" "test_access_simple" {
   depends_on = [
     null_resource.verifications
