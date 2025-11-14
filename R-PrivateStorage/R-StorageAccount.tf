@@ -1,8 +1,9 @@
+/*
 variable "allowed_ip" {
   description = "Your allowed IP address"
   default     = ""
 }
-
+*/
 # Storage Account with public access enabled (for firewall rules to work)
 resource "azurerm_storage_account" "private" {
   name                     = var.private_storage_name
@@ -11,7 +12,8 @@ resource "azurerm_storage_account" "private" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
-  public_network_access_enabled = true
+#  public_network_access_enabled = true
+  public_network_access_enabled = false
   tags = {
     environment = "devops"
   }
@@ -22,10 +24,10 @@ resource "azurerm_storage_account_network_rules" "private" {
   
   # DENY all traffic by default
   default_action = "Deny"
-  
+/*  
   # Allow only your specific IP
   ip_rules = [var.allowed_ip]
-  
+*/  
   # Allow private endpoint subnet
   virtual_network_subnet_ids = [azurerm_subnet.private_endpoint.id]
   
