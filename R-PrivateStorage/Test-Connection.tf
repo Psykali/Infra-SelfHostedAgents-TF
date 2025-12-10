@@ -11,7 +11,7 @@ data "azurerm_storage_account" "verification" {
 
 resource "null_resource" "verifications" {
   depends_on = [
-    azurerm_storage_account.verification
+    data.azurerm_storage_account.verification  
   ]
 
   provisioner "local-exec" {
@@ -49,8 +49,6 @@ resource "null_resource" "test_access_simple" {
 output "storage_account_verification" {
   value = {
     name                      = data.azurerm_storage_account.verification.name
-    public_network_access     = data.azurerm_storage_account.verification.public_network_access_enabled
-    private_endpoint_connections = length(data.azurerm_storage_account.verification.private_endpoint_connections)
     network_rules_default_action = azurerm_storage_account_network_rules.private.default_action
     allowed_subnets_count     = length(azurerm_storage_account_network_rules.private.virtual_network_subnet_ids)
     status                    = "✅ Private storage account configured successfully"
