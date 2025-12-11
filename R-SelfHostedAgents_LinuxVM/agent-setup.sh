@@ -3,14 +3,22 @@
 # =============================================
 # CONFIGURATION VARIABLES
 # =============================================
+### le nom du client il faut que ça soit homogene dans tout les scripts 
 CLIENT_NAME="client"
-AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops"
-PAT_TOKEN="BSAAkacP3YMqphCwk0jwyYuYyZMW4QYe3tOVdbCHpEVXAcO8up4XJQQJ99BKACAAAAA2O8gkAAASAZDOgQ7J"
-POOL_NAME="$CLIENT_NAME-hostedagents-ubuntu01"
+### ça c'est l'URL d'organisation où on heberge les agents ne les changez pas sauf que vous allez deployer à partir d'une autre organisation 
+AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops" 
+### Ici on mis le PAT/Token d'accés créé pour que les agents puisse se connecter àu projet
+PAT_TOKEN="xxxxxxxxxxxxx"    
+## Il faut verifier le bon conformité de nom avec le Pool d'agents Créé 
+POOL_NAME="$CLIENT_NAME-ubuntu-agents-00x"
+### Ici c'est le nombre des agents ne les baisse pas, Mais vous pouvez augmentez le nombre ( pour le bon fonctionnement)  
 AGENT_COUNT=5
+### C'est la version des agents ne le changez pas sauf dans les logs il vous dit que cette version n'existe plus, il faut donc prendre la version existante 
+AGENT_VERSION="4.261.0"
+
+### Ne les changez pas sauf autres consigne 
 AGENTS_BASE_DIR="/opt/azure-devops-agents"
 AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
-AGENT_VERSION="4.261.0"
 SERVICE_USER="devopsadmin"
 SERVICE_PREFIX="$CLIENT_NAME-adoagent"
 
