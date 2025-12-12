@@ -1,8 +1,23 @@
-# Variables
+### Variables to be modified to the clients values
+### ----------------------------------------------
+variable "admin_username" {
+  description = "Name of the resource group"
+  sensitive = true
+  default     = "devopsadmin"
+}
+
+### Password for the VM of the Agents, Create a strong Password and store it in bitwarden
+variable "admin_password" {
+  description = "Name of the resource group"
+  sensitive = true
+  default     = "FGHJfghj1234!"
+}
+
 variable "vm_rg_name" {
   description = "Name of the resource group"
   default     = "client-devops-agents-vm-rg"
 }
+
 variable "networking_rg_name" {
   description = "Name of the resource group"
   default     = "client-devops-agents-network-rg"
