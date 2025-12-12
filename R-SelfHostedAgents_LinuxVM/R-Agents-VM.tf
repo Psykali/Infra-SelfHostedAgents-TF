@@ -4,8 +4,8 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name = azurerm_resource_group.vm_rg.name
   location            = azurerm_resource_group.vm_rg.location
   size                = var.vm_size
-  admin_username      = "devopsadmin"
-  admin_password      = "FGHJfghj1234"
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
   disable_password_authentication = false
   network_interface_ids = [
     azurerm_network_interface.main.id,
