@@ -4,7 +4,7 @@
 # CONFIGURATION VARIABLES
 # =============================================
 ### le nom du client il faut que ça soit homogene dans tout les scripts 
-CLIENT_NAME="client"
+CLIENT_NAME="test"
 ### ça c'est l'URL d'organisation où on heberge les agents ne les changez pas sauf que vous allez deployer à partir d'une autre organisation 
 AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops" 
 ### Ici on mis le PAT/Token d'accés créé pour que les agents puisse se connecter àu projet
