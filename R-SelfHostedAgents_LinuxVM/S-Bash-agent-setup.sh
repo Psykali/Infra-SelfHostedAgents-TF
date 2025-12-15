@@ -8,9 +8,9 @@ CLIENT_NAME="test"
 ### ça c'est l'URL d'organisation où on heberge les agents ne les changez pas sauf que vous allez deployer à partir d'une autre organisation 
 AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops" 
 ### Ici on mis le PAT/Token d'accés créé pour que les agents puisse se connecter àu projet
-PAT_TOKEN="xxxxxxxxxxxxx"    
+PAT_TOKEN="5RBSMMXfWCC8EYj6TNuBcuv7UCFGmH7bwmr9w4RcKOiUy6jiBERcJQQJ99BLACAAAAA2O8gkAAASAZDOZWe2"    
 ## Il faut verifier le bon conformité de nom avec le Pool d'agents Créé 
-POOL_NAME="$CLIENT_NAME-ubuntu-agents-00x"
+POOL_NAME="$CLIENT_NAME-ubuntu-agents-001"
 ### Ici c'est le nombre des agents ne les baisse pas, Mais vous pouvez augmentez le nombre ( pour le bon fonctionnement)  
 AGENT_COUNT=5
 ### C'est la version des agents ne le changez pas sauf dans les logs il vous dit que cette version n'existe plus, il faut donc prendre la version existante 
