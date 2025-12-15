@@ -2,7 +2,7 @@
 ### Storage Account with public access Denied 
 ### ------------------------------------------
 resource "azurerm_storage_account" "private" {
-  name                     = var.private_storage_name
+  name                     = local.private_storage_name
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
@@ -40,7 +40,7 @@ resource "null_resource" "wait_for_full_setup" {
 ### Creat Blob Container 
 ### ---------------------
 resource "azurerm_storage_container" "tfstate" {
-  name                  = var.tfstate_container_name
+  name                  = local.tfstate_container_name
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
 
