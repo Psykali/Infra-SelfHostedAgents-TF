@@ -17,13 +17,13 @@ resource "azurerm_subnet" "private_endpoint" {
 ### Private endpoint (no DNS zone)
 ### -------------------------
 resource "azurerm_private_endpoint" "storage" {
-  name                = var.private_endpoint_name
+  name                = local.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
   subnet_id           = azurerm_subnet.private_endpoint.id
 
   private_service_connection {
-    name                           = var.private_endpoint_connection_name
+    name                           = local.private_endpoint_connection_name
     private_connection_resource_id = azurerm_storage_account.private.id
     subresource_names              = ["blob"]
     is_manual_connection           = false
