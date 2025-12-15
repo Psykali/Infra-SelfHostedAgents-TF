@@ -4,7 +4,8 @@
 variable "customer" {
   description = "Customer short-code (2-5 lower-case letters/numbers)"
   type        = string
-  default     = "test"   # <-- change only this line
+### change only this entry and must be homogene with the client name in the variables of the SelfHosted VM  
+  default     = "test"    
 }
 
 locals {
