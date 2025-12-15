@@ -17,7 +17,7 @@ resource "azurerm_subnet" "private_endpoint" {
 ### Create private endpoint
 ### -------------------------
 resource "azurerm_private_endpoint" "storage" {
-  name                = var.private_endpoint_name
+  name                = local.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
   subnet_id           = azurerm_subnet.private_endpoint.id  
