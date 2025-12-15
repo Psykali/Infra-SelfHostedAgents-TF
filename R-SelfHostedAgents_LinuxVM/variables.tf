@@ -38,9 +38,9 @@ locals {
   pip_name = "pip-${var.customer}-${local.base}-001"
   nic_name = "nic-${var.customer}-${local.base}-001"
 }
-### ----------------------------------------------
+### -------------------------------------------------------------------
 ### Location must be in France as a first option for the rules of RGPD
-### ----------------------------------------------
+### -------------------------------------------------------------------
 variable "location" {
   description = "Azure region"
   default     = "francecentral"
@@ -49,4 +49,22 @@ variable "location" {
 variable "vm_size" {
   description = "VM size"
   default     = "Standard_B2als_v2"
+}
+### -------
+### Tages 
+### -------
+locals {
+  common_tags = {
+    Client        = "BSE"
+    Environment   = "Prod"     ### Choose between (Dev, QAL & Prod)
+    Criticality   = "High"     ### Choose between (Low, Medium & High)
+    CreatedBy     = "SKA"      ###  BSE Name Code
+    Purpose       = "Test DevOps SelfHosted Agents"
+    Project       = "Forge DevOps"
+#    CostCenter    = ""
+#    BusinessUnit  = ""
+    CreationDate  = formatdate("YYYY-MM-DD", timestamp())
+    Terraform     = "true"
+    ManagedBy     = "terraform"
+  }
 }
