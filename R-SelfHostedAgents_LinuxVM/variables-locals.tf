@@ -20,7 +20,8 @@ variable "admin_password" {
 variable "customer" {
   description = "Customer short-code (2-5 lower-case letters/numbers)"
   type        = string
-  default     = "client"   # <-- change only this line
+### change only this entry and must be homogene with the client name in the variables of the storage account 
+  default     = "test"    
 }
 locals {
   base = "ado-agents"               # fixed part describing the workload
