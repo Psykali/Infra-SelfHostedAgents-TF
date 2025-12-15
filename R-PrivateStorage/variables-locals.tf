@@ -13,7 +13,7 @@ locals {
   base_storage = "tfstate"          # workload suffix for storage assets
 
   # Storage resource-group name
-  storage_rg_name = "rg-storage-${var.customer}-${local.base_storage}"
+  storage_rg_name = "rg-tf-storage-${var.customer}-${local.base_storage}"
 
   # Storage account (24-char max, lowercase, no hyphens at ends)
   private_storage_name = "${var.customer}st${local.base_storage}001"
