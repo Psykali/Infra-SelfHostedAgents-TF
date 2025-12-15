@@ -32,3 +32,20 @@ variable "location" {
   description = "Azure region"
   default     = "francecentral"
 }
+
+### -------------------------------------------------------------------
+### -------------------------------------------------------------------
+variable "vnet_id" {
+  description = "Virtual-network ID produced by stage 1"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "VM subnet ID produced by stage 1"
+  type        = string
+}
+
+variable "network_rg_name" {
+  description = "Resource-group name of the networking resources"
+  type        = string
+}
