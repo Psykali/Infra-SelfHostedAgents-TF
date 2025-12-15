@@ -1,4 +1,6 @@
-# Create a null_resource that waits for VM
+### -----------------------------------------
+### Create a null_resource that waits for VM
+### -----------------------------------------
 resource "null_resource" "setup_devops_agents" {
   depends_on = [azurerm_linux_virtual_machine.main]
 
@@ -8,10 +10,11 @@ resource "null_resource" "setup_devops_agents" {
     password = azurerm_linux_virtual_machine.main.admin_password
     host     = data.azurerm_public_ip.vm_ip.ip_address
   }
-
-  # Upload the script file
+### -----------------------
+### Upload the script file
+### -----------------------
   provisioner "file" {
-    source      = "agent-setup.sh"
+    source      = "S-Bash-agent-setup.sh"
     destination = "agent-setup.sh"
   }
 
