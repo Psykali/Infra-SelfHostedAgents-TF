@@ -2,7 +2,7 @@
 ### Create a dedicated subnet for private endpoints
 ### ------------------------------------------------
 resource "azurerm_subnet" "private_endpoint" {
-  name                 = var.private_endpoint_subnet_name
+  name                 = local.private_endpoint_subnet_name
   resource_group_name  = "client-devops-agents-network-rg"  
   virtual_network_name = data.azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.3.0/24"]  # Different subnet than the VM subnet
