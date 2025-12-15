@@ -1,4 +1,6 @@
-# Create a dedicated subnet for private endpoints (best practice)
+### ------------------------------------------------
+### Create a dedicated subnet for private endpoints
+### ------------------------------------------------
 resource "azurerm_subnet" "private_endpoint" {
   name                 = var.private_endpoint_subnet_name
   resource_group_name  = "client-devops-agents-network-rg"  
@@ -11,6 +13,9 @@ resource "azurerm_subnet" "private_endpoint" {
   
 }
 
+### -------------------------
+### Create private endpoint
+### -------------------------
 resource "azurerm_private_endpoint" "storage" {
   name                = var.private_endpoint_name
   location            = azurerm_resource_group.storage.location
