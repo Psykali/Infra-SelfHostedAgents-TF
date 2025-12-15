@@ -1,5 +1,8 @@
+### ----------------------
+### Infra Resource Group
+### ----------------------
 resource "azurerm_resource_group" "vm_rg" {
-  name     = var.vm_rg_name
+  name     = local.vm_rg_name
   location = var.location
 
   tags = merge(local.common_tags, {
@@ -8,8 +11,11 @@ resource "azurerm_resource_group" "vm_rg" {
   })
 }
 
+### --------------------------
+### Networking Resource Group
+### ---------------------------
 resource "azurerm_resource_group" "network_rg" {
-  name     = var.networking_rg_name
+  name     = local.networking_rg_name
   location = var.location
 
   tags = merge(local.common_tags, {
