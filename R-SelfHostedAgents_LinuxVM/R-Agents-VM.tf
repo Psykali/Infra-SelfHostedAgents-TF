@@ -1,4 +1,6 @@
-# Linux Virtual Machine
+### -------------------------------------
+### SelfHosted ADO Linux Virtual Machine
+### --------------------------------------
 resource "azurerm_linux_virtual_machine" "main" {
   name                = local.vm_name
   resource_group_name = azurerm_resource_group.vm_rg.name
