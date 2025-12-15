@@ -51,7 +51,7 @@ variable "vm_size" {
   default     = "Standard_B2als_v2"
 }
 ### -------
-### Tages 
+### Tags 
 ### -------
 locals {
   common_tags = {
