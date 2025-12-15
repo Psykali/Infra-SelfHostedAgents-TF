@@ -24,3 +24,11 @@ locals {
   private_endpoint_connection_name = "pec-${var.customer}-${local.base_storage}-blob"
   private_endpoint_subnet_name     = "snet-${var.customer}-${local.base_storage}-pe"
 }
+
+### -------------------------------------------------------------------
+### Location must be in France as a first option for the rules of RGPD
+### -------------------------------------------------------------------
+variable "location" {
+  description = "Azure region"
+  default     = "francecentral"
+}
