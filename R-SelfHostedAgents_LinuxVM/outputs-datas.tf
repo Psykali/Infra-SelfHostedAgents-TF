@@ -21,3 +21,19 @@ output "vm_resource_group_name" {
 output "networking_resource_group_name" {  
   value = azurerm_resource_group.network_rg.name
 }
+
+output "vnet_id" {
+  value = azurerm_virtual_network.main.id
+}
+
+output "vnet_name" {
+  value = azurerm_virtual_network.main.name
+}
+
+output "subnet_id" {
+  value = azurerm_subnet.main.id
+}
+
+output "network_rg_name" {
+  value = azurerm_resource_group.network.name
+}
