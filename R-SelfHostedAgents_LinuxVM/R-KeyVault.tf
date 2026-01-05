@@ -2,27 +2,7 @@
 # KEY VAULT FOR SECRETS - DEVOPS AGENTS
 # =============================================
 # Purpose: Create Key Vault to securely store VM credentials
-# Usage: Generates random password and stores it in Key Vault
-# Note: Uses separate user-assigned identity to break circular dependency
-
-# Generate secure random password for VM
-resource "random_password" "vm_password" {
-  length           = 21
-  special          = true
-  override_special = "!@#%^&*()-_=+[]{}<>:?"
-}
-
-# Create a user-assigned identity for VM (breaks the cycle)
-resource "azurerm_user_assigned_identity" "vm_identity" {
-  name                = "id-${local.vm_name}"
-  resource_group_name = azurerm_resource_group.agent.name
-  location            = azurerm_resource_group.agent.location
-  
-  tags = merge(local.common_tags, {
-    Component = "identity"
-    Usage     = "vm-keyvault-access"
-  })
-}
+# Usage: Stores the same password used for VM creation
 
 # Key Vault for storing secrets
 resource "azurerm_key_vault" "main" {
@@ -43,38 +23,48 @@ resource "azurerm_key_vault" "main" {
     ]
   }
   
-  # Access policy for user-assigned identity
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azurerm_user_assigned_identity.vm_identity.principal_id
-    
-    secret_permissions = [
-      "Get", "List"
-    ]
-  }
-  
   tags = merge(local.common_tags, {
     Component = "security"
     Usage     = "vm-credentials-storage"
   })
+  
+  depends_on = [azurerm_linux_virtual_machine.main]
 }
 
-# Store VM password in Key Vault
+# Store VM password in Key Vault (same as VM password)
 resource "azurerm_key_vault_secret" "vm_admin_password" {
   name         = "vm-admin-password"
-  value        = random_password.vm_password.result
+  value        = random_password.local_vm_password.result
   key_vault_id = azurerm_key_vault.main.id
   
   tags = merge(local.common_tags, {
     Component = "credentials"
     Resource  = local.vm_name
   })
+  
+  depends_on = [azurerm_key_vault.main]
+}
+
+# Add VM identity to Key Vault access policy AFTER VM creation
+resource "azurerm_key_vault_access_policy" "vm_identity" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_virtual_machine.main.identity[0].principal_id
+  
+  secret_permissions = [
+    "Get", "List"
+  ]
+  
+  depends_on = [
+    azurerm_linux_virtual_machine.main,
+    azurerm_key_vault.main
+  ]
 }
 
 # Data source for current Azure client
 data "azurerm_client_config" "current" {}
 
-# Output the secret ID for VM reference
+# Output the secret ID for reference
 output "key_vault_secret_id" {
   value       = azurerm_key_vault_secret.vm_admin_password.id
   description = "Key Vault secret ID for VM password"
