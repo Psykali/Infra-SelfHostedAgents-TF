@@ -9,7 +9,7 @@ variable "client_name" {
   description = "Client Acronyme 2-4 minisule letters (MUST match agents deployment)"
   type        = string
   # Client Acronyme 2-4 minisule letters (MUST match agents deployment)
-  default     = "client"  # MUST BE SAME AS IN AGENTS DEPLOYMENT
+  default     = "demo"  # MUST BE SAME AS IN AGENTS DEPLOYMENT
 }
 
 variable "environment" {
@@ -33,7 +33,7 @@ locals {
   # Base naming components
   sequence_number = "01"
   # Client Acronyme 2-4 minisule letters (MUST match agents deployment)
-  workload_name   = "devops" # MUST BE SAME AS IN AGENTS DEPLOYMENT
+  workload_name   = "ado" # MUST BE SAME AS IN AGENTS DEPLOYMENT
   storage_suffix  = "tfstate"
   
   # Resource Group Names (MS Naming Convention)
