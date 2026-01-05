@@ -1,16 +1,16 @@
 # =============================================
-# STORAGE ACCOUNT - TERRAFORM STATE
+# PRIVATE STORAGE ACCOUNT FOR TERRAFORM STATE
 # =============================================
 # Purpose: Create private storage account for Terraform state
 # Usage: Backend storage with private endpoint connectivity
+# =============================================
 
-# Storage Account
 resource "azurerm_storage_account" "private" {
   name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS"
+  account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
   
   # Security: Disable public access
@@ -29,11 +29,11 @@ resource "azurerm_storage_account" "private" {
   })
   
   lifecycle {
-    prevent_destroy = true  # Critical: Contains Terraform state!
+    prevent_destroy = true
   }
 }
 
-# Network Rules - Deny all, allow only from agents subnet
+# Network rules for storage account
 resource "azurerm_storage_account_network_rules" "private" {
   storage_account_id = azurerm_storage_account.private.id
   
@@ -49,15 +49,14 @@ resource "azurerm_storage_account_network_rules" "private" {
   depends_on = [azurerm_storage_account.private]
 }
 
-# Storage Container for Terraform State
+# Storage container for Terraform State
+# FIXED: azurerm_storage_container doesn't support tags
 resource "azurerm_storage_container" "tfstate" {
   name                  = local.container_name
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
   
-  tags = merge(local.common_tags, {
-    Description = "Container for Terraform state files"
-  })
+  # NO TAGS HERE - azurerm_storage_container doesn't support tags
   
   depends_on = [
     azurerm_storage_account.private,
