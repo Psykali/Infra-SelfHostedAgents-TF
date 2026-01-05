@@ -2,7 +2,7 @@
 # KEY VAULT FOR SECRETS - DEVOPS AGENTS
 # =============================================
 # Purpose: Create Key Vault to securely store VM credentials
-# Usage: Stores the same password used for VM creation
+# Usage: Stores the VM password for secure retrieval
 
 # Key Vault for storing secrets
 resource "azurerm_key_vault" "main" {
@@ -27,11 +27,9 @@ resource "azurerm_key_vault" "main" {
     Component = "security"
     Usage     = "vm-credentials-storage"
   })
-  
-  depends_on = [azurerm_linux_virtual_machine.main]
 }
 
-# Store VM password in Key Vault (same as VM password)
+# Store VM password in Key Vault
 resource "azurerm_key_vault_secret" "vm_admin_password" {
   name         = "vm-admin-password"
   value        = random_password.local_vm_password.result
@@ -45,7 +43,7 @@ resource "azurerm_key_vault_secret" "vm_admin_password" {
   depends_on = [azurerm_key_vault.main]
 }
 
-# Add VM identity to Key Vault access policy AFTER VM creation
+# Add VM identity to Key Vault access policy (optional, for future use)
 resource "azurerm_key_vault_access_policy" "vm_identity" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -63,10 +61,3 @@ resource "azurerm_key_vault_access_policy" "vm_identity" {
 
 # Data source for current Azure client
 data "azurerm_client_config" "current" {}
-
-# Output the secret ID for reference
-output "key_vault_secret_id" {
-  value       = azurerm_key_vault_secret.vm_admin_password.id
-  description = "Key Vault secret ID for VM password"
-  sensitive   = true
-}
