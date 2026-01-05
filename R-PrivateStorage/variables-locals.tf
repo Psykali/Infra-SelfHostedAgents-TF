@@ -1,65 +1,66 @@
 # =============================================
-# INPUT VARIABLES FOR STORAGE ACCOUNT
+# VARIABLES AND LOCALS - STORAGE ACCOUNT
 # =============================================
+# Purpose: Define input variables and local values for storage account
+# Usage: Central configuration - must match client_name from agents deployment
 
-# Customer/Client Configuration
-variable "customer" {
-  description = "Client Acronyme (2-4 characters, lowercase)"
+# ============= INPUT VARIABLES =============
+variable "client_name" {
+  description = "Client Acronyme 2-4 minisule letters (MUST match agents deployment)"
   type        = string
-  default     = "test"
-  validation {
-    condition     = length(var.customer) >= 2 && length(var.customer) <= 5
-    error_message = "Customer Acronyme must be 2-4 characters."
-  }
+  # Client Acronyme 2-4 minisule letters (MUST match agents deployment)
+  default     = "client"  # MUST BE SAME AS IN AGENTS DEPLOYMENT
 }
 
-# Environment Configuration
 variable "environment" {
-  description = "Deployment environment (dev, qal, prd)"
+  description = "Environment (dev, qal, prd)"
   type        = string
   default     = "prd"
-  validation {
-    condition     = contains(["dev", "qal", "prd"], var.environment)
-    error_message = "Environment must be 'dev', 'qal', or 'prd'."
-  }
 }
 
-# Location Configuration
 variable "location" {
   description = "Azure region for deployment"
-  type        = string
   default     = "francecentral"
 }
 
 variable "location_code" {
-  description = "Short code for location (used in naming)"
-  type        = string
+  description = "Short code for location in naming"
   default     = "frc"
 }
 
-# Storage Configuration
-variable "storage_account_tier" {
-  description = "Storage account tier"
-  type        = string
-  default     = "Standard"
-}
-
-variable "storage_replication_type" {
-  description = "Storage replication type"
-  type        = string
-  default     = "LRS"
-}
-
-# DNS Configuration
-variable "create_private_dns_zone" {
-  description = "Whether to create private DNS zone (set false if DevOps Agents created it)"
-  type        = bool
-  default     = true
-}
-
-# Tags
-variable "additional_tags" {
-  description = "Additional tags to apply to all resources"
-  type        = map(string)
-  default     = {}
+# ============= LOCAL VALUES =============
+locals {
+  # Base naming components
+  sequence_number = "01"
+  # Client Acronyme 2-4 minisule letters (MUST match agents deployment)
+  workload_name   = "devops" # MUST BE SAME AS IN AGENTS DEPLOYMENT
+  storage_suffix  = "tfstate"
+  
+  # Resource Group Names (MS Naming Convention)
+  storage_rg_name = "rg-${var.client_name}-${local.workload_name}-${local.storage_suffix}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  network_rg_name = "rg-${var.client_name}-${local.workload_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
+  
+  # Storage Account (24 chars max, lowercase, no hyphens)
+  storage_account_name = "st${var.client_name}${local.workload_name}${var.environment}${var.location_code}${local.sequence_number}"
+  
+  # Container
+  container_name = "tfstate"
+  
+  # Network references (from DevOps Agents deployment)
+  vnet_name   = "vnet-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  subnet_name = "snet-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  
+  # Private Endpoint
+  private_endpoint_name = "pep-st${var.client_name}${local.workload_name}${var.environment}${var.location_code}${local.sequence_number}"
+  private_endpoint_nic_name = "nic-pep-st${var.client_name}${local.workload_name}${var.environment}${var.location_code}${local.sequence_number}"
+  
+  # Common Tags
+  common_tags = {
+    Client        = var.client_name
+    Environment   = var.environment
+    Project       = "DevOps Infrastructure"
+    Component     = "storage"
+    ManagedBy     = "Terraform"
+    Persistent    = "true"  # This storage should not be deleted
+  }
 }
