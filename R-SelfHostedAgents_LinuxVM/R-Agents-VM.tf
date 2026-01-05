@@ -2,17 +2,23 @@
 # VIRTUAL MACHINE - DEVOPS AGENTS
 # =============================================
 # Purpose: Create Ubuntu VM for hosting DevOps agents
-# Usage: Self-hosted agent VM with Key Vault integration via extension
+# Usage: Self-hosted agent VM with Key Vault integration
 
+# Generate local password for VM (breaks circular dependency)
+resource "random_password" "local_vm_password" {
+  length           = 16
+  special          = true
+  override_special = "!@#$%^&*()-_=+[]{}<>:?"
+}
+
+# Create VM with local password
 resource "azurerm_linux_virtual_machine" "main" {
   name                = local.vm_name
   resource_group_name = azurerm_resource_group.agent.name
   location            = azurerm_resource_group.agent.location
   size                = var.vm_size
   admin_username      = var.admin_username
-  
-  # Use temporary password, will be replaced by Key Vault extension
-  admin_password                  = "TempPassword123!"  # Temporary, will be changed
+  admin_password      = random_password.local_vm_password.result
   disable_password_authentication = false
   
   network_interface_ids = [
@@ -34,7 +40,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = "latest"
   }
   
-  # Both system-assigned and user-assigned identity
+  # System-assigned identity for future Key Vault access
   identity {
     type = "SystemAssigned"
   }
@@ -45,16 +51,16 @@ resource "azurerm_linux_virtual_machine" "main" {
     OS          = "Ubuntu-22.04-LTS"
   })
   
-  # Ensure VM is created before Key Vault extension
-  depends_on = [
-    azurerm_key_vault.main,
-    azurerm_key_vault_secret.vm_admin_password
-  ]
+  lifecycle {
+    ignore_changes = [
+      admin_password  # Password will be managed separately
+    ]
+  }
 }
 
-# Use VM extension to retrieve password from Key Vault
-resource "azurerm_virtual_machine_extension" "keyvault" {
-  name                 = "KeyVaultPasswordSetup"
+# Simple extension to install Azure CLI (optional)
+resource "azurerm_virtual_machine_extension" "install_tools" {
+  name                 = "InstallTools"
   virtual_machine_id   = azurerm_linux_virtual_machine.main.id
   publisher            = "Microsoft.Azure.Extensions"
   type                 = "CustomScript"
@@ -62,18 +68,12 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   
   settings = <<SETTINGS
     {
-      "commandToExecute": "echo 'Password management via Key Vault extension would go here' > /tmp/keyvault-setup.txt"
+      "script": "#!/bin/bash\napt-get update\napt-get install -y curl wget unzip jq\ncurl -sL https://aka.ms/InstallAzureCLIDeb | bash"
     }
   SETTINGS
   
-  protected_settings = <<PROTECTED_SETTINGS
-    {
-      "secretUrl": "${azurerm_key_vault_secret.vm_admin_password.id}"
-    }
-  PROTECTED_SETTINGS
-  
   tags = merge(local.common_tags, {
-    Component = "security"
-    Purpose   = "keyvault-password-setup"
+    Component = "setup"
+    Purpose   = "install-tools"
   })
 }
