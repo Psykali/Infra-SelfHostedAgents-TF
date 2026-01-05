@@ -19,7 +19,7 @@ AGENT_VERSION="4.261.0"
 ### Ne les changez pas sauf autres consigne 
 AGENTS_BASE_DIR="/opt/azure-devops-agents"
 AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
-SERVICE_USER="devopsadmin"
+SERVICE_USER="adoadmin"
 SERVICE_PREFIX="$CLIENT_NAME-adoagent"
 
 # =============================================
