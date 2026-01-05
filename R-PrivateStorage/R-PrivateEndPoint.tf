@@ -2,7 +2,7 @@
 # PRIVATE ENDPOINT - STORAGE ACCOUNT
 # =============================================
 # Purpose: Create private endpoint for direct storage access
-# Usage: Enables private connectivity without DNS zone
+# Location: storage-account/ folder ONLY
 
 resource "azurerm_private_endpoint" "storage" {
   name                = local.private_endpoint_name
@@ -17,7 +17,7 @@ resource "azurerm_private_endpoint" "storage" {
     is_manual_connection           = false
   }
   
-  # Custom NIC name as per recommendation
+  # Custom NIC name
   network_interface {
     name = local.private_endpoint_nic_name
   }
@@ -26,9 +26,4 @@ resource "azurerm_private_endpoint" "storage" {
     Component = "networking"
     Service   = "storage"
   })
-  
-  depends_on = [
-    azurerm_storage_account.private,
-    azurerm_storage_container.tfstate
-  ]
 }
