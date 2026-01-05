@@ -1,41 +1,65 @@
-### ----------------------------------------------
-### Naming Should be Homogene with the Azure & Vlient naming Policies
-### ----------------------------------------------
+# =============================================
+# INPUT VARIABLES FOR STORAGE ACCOUNT
+# =============================================
+
+# Customer/Client Configuration
 variable "customer" {
-  description = "Customer short-code (2-5 lower-case letters/numbers)"
+  description = "Client Acronyme (2-4 characters, lowercase)"
   type        = string
-### change only this entry and must be homogene with the client name in the variables of the SelfHosted VM  
-  default     = "test"    
+  default     = "test"
+  validation {
+    condition     = length(var.customer) >= 2 && length(var.customer) <= 5
+    error_message = "Customer Acronyme must be 2-4 characters."
+  }
 }
 
-locals {
-  base = "ado-agents"               # workload suffix from stage 1 for data
-  base_storage = "tfstate"          # workload suffix for storage assets
-
-  # Storage resource-group name
-  storage_rg_name = "rg-tf-storage-${var.customer}-${local.base_storage}"
-
-  # Storage account (24-char max, lowercase, no hyphens at ends)
-  private_storage_name = "${var.customer}st${local.base_storage}001"
-
-  # Container names (lower-case, numbers & hyphens only)
-  tfstate_container_name = "tfstate-${var.customer}"
-
-  # Private-endpoint related names
-  private_endpoint_name            = "pe-${var.customer}-${local.base_storage}-blob"
-  private_endpoint_connection_name = "pec-${var.customer}-${local.base_storage}-blob"
-  private_endpoint_subnet_name     = "snet-${var.customer}-${local.base_storage}-pe"
-
-  # network objects from stage 1 for data 
-  networking_rg_name= "rg-networking-${var.customer}-${local.base}"
-  vnet_name   = "vnet-${var.customer}-${local.base}"
-  subnet_name = "snet-${var.customer}-${local.base}"
+# Environment Configuration
+variable "environment" {
+  description = "Deployment environment (dev, qal, prd)"
+  type        = string
+  default     = "prd"
+  validation {
+    condition     = contains(["dev", "qal", "prd"], var.environment)
+    error_message = "Environment must be 'dev', 'qal', or 'prd'."
+  }
 }
 
-### -------------------------------------------------------------------
-### Location must be in France as a first option for the rules of RGPD
-### -------------------------------------------------------------------
+# Location Configuration
 variable "location" {
-  description = "Azure region"
+  description = "Azure region for deployment"
+  type        = string
   default     = "francecentral"
+}
+
+variable "location_code" {
+  description = "Short code for location (used in naming)"
+  type        = string
+  default     = "frc"
+}
+
+# Storage Configuration
+variable "storage_account_tier" {
+  description = "Storage account tier"
+  type        = string
+  default     = "Standard"
+}
+
+variable "storage_replication_type" {
+  description = "Storage replication type"
+  type        = string
+  default     = "LRS"
+}
+
+# DNS Configuration
+variable "create_private_dns_zone" {
+  description = "Whether to create private DNS zone (set false if DevOps Agents created it)"
+  type        = bool
+  default     = true
+}
+
+# Tags
+variable "additional_tags" {
+  description = "Additional tags to apply to all resources"
+  type        = map(string)
+  default     = {}
 }
