@@ -1,8 +1,8 @@
-### =============================================
-### PROVIDERS FOR STORAGE DEPLOYMENT
-### =============================================
-### Purpose: Configures Terraform providers for storage account deployment
-### Note: Initial deployment has no backend. After first deploy, configure backend.
+# =============================================
+# TERRAFORM PROVIDERS - STORAGE ACCOUNT
+# =============================================
+# Purpose: Configure Terraform providers for storage account deployment
+# Usage: Initial deployment without backend - will store state locally first
 
 terraform {
   required_version = ">= 1.0"
@@ -15,11 +15,10 @@ terraform {
   }
 }
 
-# Azure provider configuration
 provider "azurerm" {
   features {
     resource_group {
-      prevent_deletion_if_contains_resources = false
+      prevent_deletion_if_contains_resources = false  # Protect storage RG
     }
   }
 }
