@@ -1,28 +1,24 @@
-### ---------------------------------------------------------
-### Data sources to reference existing networking resources
-### ---------------------------------------------------------
+# =============================================
+# DATA SOURCES - STORAGE ACCOUNT
+# =============================================
+# Purpose: Reference existing network resources from agents deployment
+# Usage: Gets VNET and subnet info for private endpoint connection
+# Important: DevOps agents must be deployed first
+
+# Data source for existing network resource group
+data "azurerm_resource_group" "network" {
+  name = local.network_rg_name
+}
+
+# Data source for existing virtual network
 data "azurerm_virtual_network" "main" {
-  name                = local.vnet_name 
-  resource_group_name = local.networking_rg_name 
+  name                = local.vnet_name
+  resource_group_name = data.azurerm_resource_group.network.name
 }
 
-data "azurerm_subnet" "main" {
-  name                 = local.subnet_name  
+# Data source for existing subnet
+data "azurerm_subnet" "agents" {
+  name                 = local.subnet_name
   virtual_network_name = data.azurerm_virtual_network.main.name
-  resource_group_name  = data.azurerm_virtual_network.main.resource_group_name
-}
-
-### --------
-### Outputs
-### --------
-output "storage_account_name" {
-  value = azurerm_storage_account.private.name
-}
-
-output "storage_container_name" {
-  value = azurerm_storage_container.tfstate.name
-}
-
-output "storage_account_id" {
-  value = azurerm_storage_account.private.id
+  resource_group_name  = data.azurerm_resource_group.network.name
 }
