@@ -2,9 +2,9 @@
 # VIRTUAL MACHINE - DEVOPS AGENTS
 # =============================================
 # Purpose: Create Ubuntu VM for hosting DevOps agents
-# Usage: Self-hosted agent VM with Key Vault integration
+# Usage: Self-hosted agent VM - ALL CONFIGURATION DONE IN Conf-agentVM.tf
 
-# Generate local password for VM (breaks circular dependency)
+# Generate local password for VM
 resource "random_password" "local_vm_password" {
   length           = 16
   special          = true
@@ -40,7 +40,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = "latest"
   }
   
-  # System-assigned identity for future Key Vault access
+  # System-assigned identity for Key Vault access
   identity {
     type = "SystemAssigned"
   }
@@ -49,31 +49,5 @@ resource "azurerm_linux_virtual_machine" "main" {
     Component   = "compute"
     Description = "Ubuntu VM for Azure DevOps self-hosted agents"
     OS          = "Ubuntu-22.04-LTS"
-  })
-  
-  lifecycle {
-    ignore_changes = [
-      admin_password  # Password will be managed separately
-    ]
-  }
-}
-
-# Simple extension to install Azure CLI (optional)
-resource "azurerm_virtual_machine_extension" "install_tools" {
-  name                 = "InstallTools"
-  virtual_machine_id   = azurerm_linux_virtual_machine.main.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.1"
-  
-  settings = <<SETTINGS
-    {
-      "script": "#!/bin/bash\napt-get update\napt-get install -y curl wget unzip jq\ncurl -sL https://aka.ms/InstallAzureCLIDeb | bash"
-    }
-  SETTINGS
-  
-  tags = merge(local.common_tags, {
-    Component = "setup"
-    Purpose   = "install-tools"
   })
 }
