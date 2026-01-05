@@ -53,6 +53,7 @@ output "subnet_name" {
   description = "Name of the subnet"
 }
 
+# FIXED: Added sensitive = true flag
 output "deployment_instructions" {
   value = <<EOT
 ✅ DevOps Agents Infrastructure Deployed!
@@ -71,4 +72,5 @@ Next Steps:
 4. Run agent setup script on VM
 EOT
   description = "Post-deployment instructions"
+  sensitive   = true  # ADDED THIS LINE
 }
