@@ -8,7 +8,7 @@
 variable "client_name" {
   description = "Client Acronyme between 2-4 miniscule letters (used in resource naming)"
   type        = string
-  default     = "client"  ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
+  default     = "demo"  ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
 }
 
 variable "environment" {
@@ -34,7 +34,7 @@ variable "vm_size" {
 
 variable "admin_username" {
   description = "VM administrator username"
-  default     = "devopsadmin"
+  default     = "adoadmin"
   sensitive   = true
 }
 
@@ -42,7 +42,7 @@ variable "admin_username" {
 locals {
   # Base naming components
   sequence_number = "01"
-  workload_name   = "devops" ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
+  workload_name   = "ado" ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
   
   # Resource Group Names (MS Naming Convention)
   network_rg_name = "rg-${var.client_name}-${local.workload_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
