@@ -22,7 +22,7 @@ resource "azurerm_network_security_group" "main" {
     destination_address_prefix = "*"
   }
   
-  # Allow outbound to Azure DevOps
+  # Allow outbound to Azure DevOps (FIXED: Added source address)
   security_rule {
     name                       = "AllowAzureDevOpsOutbound"
     priority                   = 1002
@@ -31,6 +31,7 @@ resource "azurerm_network_security_group" "main" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "443"
+    source_address_prefix      = "*"  # ADDED THIS - source is VM subnet
     destination_address_prefix = "AzureDevOps"
   }
   
@@ -43,7 +44,46 @@ resource "azurerm_network_security_group" "main" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "443"
+    source_address_prefix      = "*"  # ADDED THIS
     destination_address_prefix = "Storage"
+  }
+  
+  # Allow outbound DNS (required for package updates)
+  security_rule {
+    name                       = "AllowDNSOutbound"
+    priority                   = 1004
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Udp"
+    source_port_range          = "*"
+    destination_port_range     = "53"
+    source_address_prefix      = "*"  # ADDED THIS
+    destination_address_prefix = "*"
+  }
+  
+  # Allow outbound HTTP/HTTPS for package updates
+  security_rule {
+    name                       = "AllowHTTPOutbound"
+    priority                   = 1005
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"  # ADDED THIS
+    destination_address_prefix = "*"
+  }
+  
+  security_rule {
+    name                       = "AllowHTTPSOutbound"
+    priority                   = 1006
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"  # ADDED THIS
+    destination_address_prefix = "*"
   }
   
   tags = merge(local.common_tags, {
