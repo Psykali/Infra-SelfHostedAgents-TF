@@ -1,71 +1,105 @@
-### ----------------------------------------------
-### Variables to be modified to the clients values
-### ----------------------------------------------
-variable "admin_username" {
-  description = "Name of the VM Admin login"
-  sensitive = true
-  default     = "devopsadmin"
-}
-### --------------------------------------------------------------------------------------------
-### Password for the VM of the Agents, Create a strong Password and store it in bitwarden
-### --------------------------------------------------------------------------------------------
-variable "admin_password" {
-  description = "Name of the resource group"
-  sensitive = true
-  default     = "FGHJfghj1234!"
-}
-### ----------------------------------------------
-### Naming Should be Homogene with the Azure & Vlient naming Policies
-### ----------------------------------------------
-variable "customer" {
-  description = "Customer short-code (2-5 lower-case letters/numbers)"
+### =============================================
+### VARIABLES
+### =============================================
+### Client configuration
+variable "client_name" {
+  description = "Client acronyme 3-5 lettres (used in naming)"
   type        = string
-### change only this entry and must be homogene with the client name in the variables of the storage account 
-  default     = "test"    
+  default     = "Client"  ### Change this for Client acronyme 3-5 lettres (used in naming)
 }
-locals {
-  base = "ado-agents"               # fixed part describing the workload
 
-  # resource-group names
-  vm_rg_name        = "rg-infra-${var.customer}-${local.base}"
-  networking_rg_name= "rg-networking-${var.customer}-${local.base}"
-  # network objects
-  nsg_name    = "nsg-${var.customer}-${local.base}"
-  vnet_name   = "vnet-${var.customer}-${local.base}"
-  subnet_name = "snet-${var.customer}-${local.base}"
-
-  # VM objects (keep sequence number if you spin up several)
-  vm_name = "vm-${var.customer}-${local.base}-001"
-  pip_name = "pip-${var.customer}-${local.base}-001"
-  nic_name = "nic-${var.customer}-${local.base}-001"
+variable "environment" {
+  description = "Environment (dev, qal, prod)"
+  type        = string
+  default     = "prd"
 }
-### -------------------------------------------------------------------
-### Location must be in France as a first option for the rules of RGPD
-### -------------------------------------------------------------------
+
 variable "location" {
   description = "Azure region"
   default     = "francecentral"
 }
 
+variable "location_code" {
+  description = "Location short code"
+  default     = "frc"
+}
+
+### VM Configuration
 variable "vm_size" {
-  description = "VM size"
+  description = "VM size for DevOps agents"
   default     = "Standard_B2als_v2"
 }
-### -------
-### Tags 
-### -------
+
+variable "admin_username" {
+  description = "VM admin username"
+  default     = "devopsadmin"
+  sensitive   = true
+}
+
+### Key Vault Configuration
+variable "key_vault_sku" {
+  description = "Key Vault SKU"
+  default     = "standard"
+}
+
+### Storage Configuration
+variable "storage_account_tier" {
+  description = "Storage account tier"
+  default     = "Standard"
+}
+
+variable "storage_replication" {
+  description = "Storage replication type"
+  default     = "LRS"
+}
+
+### =============================================
+### LOCALS (Naming Convention)
+### =============================================
+
 locals {
+  ### Base naming components
+  base_name        = "Client" ### Change this for Client acronyme 3-5 lettres (used in naming)
+  sequence_number  = "01"
+  
+  ### Resource Group Names (Following MS naming convention)
+  network_rg_name  = "rg-${var.client_name}-${local.base_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
+  agent_rg_name    = "rg-${var.client_name}-${local.base_name}-agent-${var.environment}-${var.location_code}-${local.sequence_number}"
+  tfstate_rg_name  = "rg-${var.client_name}-${local.base_name}-tfstate-${var.environment}-${var.location_code}-${local.sequence_number}"
+  
+  # Network Resources
+  vnet_name        = "vnet-${var.client_name}-${local.base_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  subnet_name      = "snet-${var.client_name}-${local.base_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  nsg_name         = "nsg-${var.client_name}-${local.base_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  
+  # VM Resources
+  vm_name          = "vm-${var.client_name}-${local.base_name}-agent-${var.environment}-${var.location_code}-${local.sequence_number}"
+  os_disk_name     = "osdisk-${local.vm_name}"
+  nic_name         = "nic-${local.vm_name}"
+  pip_name         = "pip-${local.vm_name}"
+  
+  # Key Vault
+  kv_name          = "kv-${var.client_name}-${local.base_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  kv_pep_name      = "pep-${local.kv_name}"
+  kv_nic_name      = "nic-${local.kv_pep_name}"
+  
+  # Storage Account (limited to 24 chars, no hyphens)
+  sa_name          = "st${var.client_name}${local.base_name}${var.environment}${var.location_code}${local.sequence_number}"
+  sa_pep_name      = "pep-${local.sa_name}"
+  sa_nic_name      = "nic-${local.sa_pep_name}"
+  
+  # Private DNS Zone
+  privatelink_dns_zone = "privatelink.blob.core.windows.net"
+  
+  # Common Tags
   common_tags = {
-    Client        = "BSE"
-    Environment   = "Prod"     ### Choose between (Dev, QAL & Prod)
-    Criticality   = "High"     ### Choose between (Low, Medium & High)
-    CreatedBy     = "SKA"      ###  BSE Name Code
-    Purpose       = "Test DevOps SelfHosted Agents"
+    Client        = var.client_name
+    Environment   = var.environment
+    Criticality   = "High"
+    CreatedBy     = "Terraform"
+    Purpose       = "DevOps Self-Hosted Agents Infrastructure"
     Project       = "Forge DevOps"
-#    CostCenter    = ""
-#    BusinessUnit  = ""
     CreationDate  = formatdate("YYYY-MM-DD", timestamp())
-    Terraform     = "true"
-    ManagedBy     = "terraform"
+    ManagedBy     = "Terraform"
   }
 }
