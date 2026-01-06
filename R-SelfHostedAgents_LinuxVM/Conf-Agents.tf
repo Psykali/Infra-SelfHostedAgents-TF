@@ -50,12 +50,14 @@ resource "null_resource" "setup_devops_agents" {
       # Configure sudo for admin user
       "echo '${var.admin_username} ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/${var.admin_username}",
       "sudo chmod 440 /etc/sudoers.d/${var.admin_username}",
-      
+          
       # Set up environment variables
+      "sed -i 's/\\r$//' /home/${var.admin_username}/agent-env.sh",
       "chmod +x /home/${var.admin_username}/agent-env.sh",
       ". /home/${var.admin_username}/agent-env.sh",
       
       # Prepare and execute setup script
+      "sed -i 's/\\r$//' /home/${var.admin_username}/agent-setup.sh",
       "sed -i 's/\r$//' /home/${var.admin_username}/agent-setup.sh",
       "sudo chmod +x /home/${var.admin_username}/agent-setup.sh",
       
