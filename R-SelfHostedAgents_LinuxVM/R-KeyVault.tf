@@ -4,60 +4,46 @@
 # Purpose: Create Key Vault to securely store VM credentials
 # Usage: Stores the VM password for secure retrieval
 
-# Key Vault for storing secrets
 resource "azurerm_key_vault" "main" {
-  name                       = local.kv_name
-  location                   = azurerm_resource_group.agent.location
-  resource_group_name        = azurerm_resource_group.agent.name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  sku_name                   = "standard"
-  soft_delete_retention_days = 7
+  name                        = "kv-${var.customer}-${local.base}-secrets"
+  location                    = azurerm_resource_group.vm_rg.location
+  resource_group_name         = azurerm_resource_group.vm_rg.name
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  sku_name                    = "standard"
+  enabled_for_disk_encryption = true
+  purge_protection_enabled    = false
   
-  # Access policy for current user (Terraform)
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
     
+    key_permissions = [
+      "Get", "List"
+    ]
+    
     secret_permissions = [
-      "Get", "List", "Set", "Delete", "Purge", "Recover"
+      "Get", "List", "Set", "Delete", "Purge"
+    ]
+    
+    certificate_permissions = [
+      "Get", "List"
+    ]
+  }
+  
+  # Allow VM's system-assigned identity to access secrets
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = azurerm_linux_virtual_machine.main.identity[0].principal_id
+    
+    secret_permissions = [
+      "Get", "List"
     ]
   }
   
   tags = merge(local.common_tags, {
-    Component = "security"
-    Usage     = "vm-credentials-storage"
+    Description = "Key Vault for storing DevOps secrets"
+    Component   = "security"
   })
 }
 
-# Store VM password in Key Vault
-resource "azurerm_key_vault_secret" "vm_admin_password" {
-  name         = "vm-admin-password"
-  value        = random_password.local_vm_password.result
-  key_vault_id = azurerm_key_vault.main.id
-  
-  tags = merge(local.common_tags, {
-    Component = "credentials"
-    Resource  = local.vm_name
-  })
-  
-  depends_on = [azurerm_key_vault.main]
-}
-
-# Add VM identity to Key Vault access policy (optional, for future use)
-resource "azurerm_key_vault_access_policy" "vm_identity" {
-  key_vault_id = azurerm_key_vault.main.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_linux_virtual_machine.main.identity[0].principal_id
-  
-  secret_permissions = [
-    "Get", "List"
-  ]
-  
-  depends_on = [
-    azurerm_linux_virtual_machine.main,
-    azurerm_key_vault.main
-  ]
-}
-
-# Data source for current Azure client
 data "azurerm_client_config" "current" {}
