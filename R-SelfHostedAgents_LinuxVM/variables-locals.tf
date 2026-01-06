@@ -86,7 +86,3 @@ locals {
     CreationDate  = formatdate("YYYY-MM-DD", timestamp())
   }
 }
-
-# ============= RANDOM PASSWORD GENERATION =============
-# Note: This resource is defined here but depends on Key Vault
-# The actual resource is in R-Secrets.tf
