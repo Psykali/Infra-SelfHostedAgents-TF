@@ -6,60 +6,46 @@
 # =============================================
 
 resource "azurerm_storage_account" "private" {
-  name                     = local.storage_account_name
+  name                     = local.private_storage_name
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
-  
-  # Security: Disable public access
   public_network_access_enabled = false
-  
-  # Enable blob soft delete for recovery
-  blob_properties {
-    delete_retention_policy {
-      days = 7
-    }
-  }
-  
-  tags = merge(local.common_tags, {
-    Description = "Private storage account for Terraform state files"
-    Usage       = "terraform-backend"
-  })
-  
-  lifecycle {
-    prevent_destroy = true
+  tags = {
+    environment = "devops"
   }
 }
 
-# Network rules for storage account
 resource "azurerm_storage_account_network_rules" "private" {
   storage_account_id = azurerm_storage_account.private.id
   
-  # Deny all by default
+  # DENY all traffic by default
   default_action = "Deny"
-  
-  # Allow from agents subnet
-  virtual_network_subnet_ids = [data.azurerm_subnet.agents.id]
-  
-  # Allow Azure services (required for private endpoints)
+  # Allow private endpoint subnet
+  virtual_network_subnet_ids = [azurerm_subnet.private_endpoint.id]
+  # Allow Azure services (required for private endpoints and other Azure services)
   bypass = ["AzureServices"]
-  
-  depends_on = [azurerm_storage_account.private]
 }
 
-# Storage container for Terraform State
-# FIXED: azurerm_storage_container doesn't support tags
+resource "null_resource" "wait_for_full_setup" {
+  depends_on = [
+    azurerm_private_endpoint.storage,
+  ]
+
+  provisioner "local-exec" {
+    command = "sleep 300"  # Wait for private endpoint to be fully ready
+  }
+}
+
+### ---------------------
+### Creat Blob Container 
+### ---------------------
 resource "azurerm_storage_container" "tfstate" {
-  name                  = local.container_name
+  name                  = local.tfstate_container_name
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
-  
-  # NO TAGS HERE - azurerm_storage_container doesn't support tags
-  
-  depends_on = [
-    azurerm_storage_account.private,
-    azurerm_storage_account_network_rules.private
-  ]
+
+  depends_on = [null_resource.wait_for_full_setup]
 }
