@@ -29,7 +29,7 @@ resource "null_resource" "setup_devops_agents" {
 
   # Upload environment configuration file with Key Vault details
   provisioner "file" {
-    content = templatefile("${path.module}/agent-env.sh.tpl", {
+    content = templatefile("${path.module}/S-Agent-Env.sh.tpl", {
       key_vault_name    = azurerm_key_vault.main.name
       vm_resource_group = azurerm_resource_group.vm_rg.name
       client_name       = var.client_name
