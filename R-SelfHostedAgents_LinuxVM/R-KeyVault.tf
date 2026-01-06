@@ -4,8 +4,8 @@
 
 resource "azurerm_key_vault" "main" {
   name                        = local.kv_name
-  location                    = azurerm_resource_group.agent.location
-  resource_group_name         = azurerm_resource_group.agent.name
+  location                    = azurerm_resource_group.vm_rg.location
+  resource_group_name         = azurerm_resource_group.vm_rg.name
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   sku_name                    = "standard"
   enabled_for_disk_encryption = true
