@@ -20,7 +20,7 @@ resource "azurerm_resource_group" "network_rg" {
 # =============================================
 # Agent Resource Group (VM, Key Vault, NIC)
 # =============================================
-resource "azurerm_resource_group" "agent" {
+resource "azurerm_resource_group" "vm_rg" {
   name     = local.agent_rg_name
   location = var.location
   
