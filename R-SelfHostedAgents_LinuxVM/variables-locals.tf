@@ -39,7 +39,7 @@ variable "admin_username" {
 variable "agent_count" {
   description = "Number of DevOps agents to install"
   type        = number
-  default     = 3
+  default     = 5
 }
 
 variable "agent_version" {
