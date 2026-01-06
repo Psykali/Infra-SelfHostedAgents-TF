@@ -52,7 +52,7 @@ variable "agent_version" {
 locals {
   # Base naming components
   sequence_number = "01"
-  workload_name   = "devops"
+  workload_name   = "ado"
   
   # Resource Group Names (MS Naming Convention)
   network_rg_name = "rg-${var.client_name}-${local.workload_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
