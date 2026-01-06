@@ -6,13 +6,13 @@
 
 resource "azurerm_public_ip" "main" {
   name                = local.pip_name
-  location            = azurerm_resource_group.network.location
-  resource_group_name = azurerm_resource_group.network.name
+  location            = azurerm_resource_group.network_rg.location
+  resource_group_name = azurerm_resource_group.network_rg.name
   allocation_method   = "Static"
-  
+
   tags = merge(local.common_tags, {
+    Description = "Public IP for DevOps agent VM"
     Component   = "networking"
-    Description = "Public IP for DevOps agent VM (temporary)"
-    Ephemeral   = "true"
+    Ephemeral   = "true"  # Dynamic IPs can change
   })
 }
