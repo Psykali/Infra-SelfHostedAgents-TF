@@ -48,26 +48,15 @@ get_keyvault_secret() {
     local secret_name="$1"
     
     if [ -z "$KEY_VAULT_NAME" ]; then
-        echo "ERROR: KEY_VAULT_NAME not set"
+        echo "ERROR: KEY_VAULT_NAME not set" >&2
         return 1
     fi
     
-    echo "Retrieving secret '$secret_name' from Key Vault '$KEY_VAULT_NAME'..."
-    
-    # Try to get secret
-    local secret_value=$(az keyvault secret show \
+    # Get secret without extra output
+    az keyvault secret show \
         --vault-name "$KEY_VAULT_NAME" \
         --name "$secret_name" \
-        --query "value" -o tsv 2>/dev/null || true)
-    
-    if [ -n "$secret_value" ]; then
-        echo "✓ Retrieved secret '$secret_name'"
-        echo "$secret_value"
-        return 0
-    else
-        echo "⚠️  Secret '$secret_name' not found or empty"
-        return 1
-    fi
+        --query "value" -o tsv 2>/dev/null
 }
 
 # Get agent configuration from Key Vault
