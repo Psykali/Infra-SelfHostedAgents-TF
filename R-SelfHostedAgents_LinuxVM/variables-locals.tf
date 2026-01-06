@@ -71,7 +71,7 @@ locals {
   pip_name     = "pip-${local.vm_name}"
   
   # Key Vault - 
-  kv_name = "kv1-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  kv_name = "kv-01-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
   
   # Storage Account (for Terraform state) 
   storage_name = "st${replace(var.client_name, "-", "")}${local.workload_name}${substr(var.environment, 0, 3)}${var.location_code}${local.sequence_number}"
