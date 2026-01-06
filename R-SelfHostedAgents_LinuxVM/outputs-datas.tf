@@ -2,6 +2,8 @@
 # DATA SOURCES AND OUTPUTS - DEVOPS AGENTS
 # =============================================
 # Purpose: Reference data and output deployment information
+data "azurerm_client_config" "current" {}
+
 
 # Get VM public IP
 data "azurerm_public_ip" "vm_ip" {
