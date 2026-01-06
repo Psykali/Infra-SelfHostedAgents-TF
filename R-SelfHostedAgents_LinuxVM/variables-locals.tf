@@ -38,6 +38,18 @@ variable "admin_username" {
   sensitive   = true
 }
 
+variable "agent_count" {
+  description = "Number of DevOps agents to install"
+  type        = number
+  default     = 3
+}
+
+variable "agent_version" {
+  description = "Azure DevOps agent version"
+  type        = string
+  default     = "4.261.0"
+}
+
 # ============= LOCAL VALUES =============
 locals {
   # Base naming components
@@ -62,6 +74,9 @@ locals {
   # Key Vault
   kv_name = "kv-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
   
+  # Agent Pool Name
+  agent_pool_name = "${var.client_name}-ubuntu-agents-${local.sequence_number}"
+  
   # Common Tags
   common_tags = {
     Client        = var.client_name
@@ -72,67 +87,6 @@ locals {
   }
 }
 
-
-# Generate random password for VM
-resource "random_password" "vm_password" {
-  length           = 21
-  special          = true
-  override_special = "!@#$%^&*()_+-="
-  min_special      = 2
-  min_numeric      = 2
-  min_upper        = 2
-  min_lower        = 2
-}
-
-# Store password in Key Vault
-resource "azurerm_key_vault_secret" "vm_password" {
-  name         = "vm-admin-password"
-  value        = random_password.vm_password.result
-  key_vault_id = azurerm_key_vault.main.id
-  
-  depends_on = [azurerm_key_vault.main]
-  
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
-
-# Store PAT in Key Vault (initially empty, will be populated by script)
-resource "azurerm_key_vault_secret" "devops_pat" {
-  name         = "azure-devops-pat"
-  value        = ""  # Will be populated later
-  key_vault_id = azurerm_key_vault.main.id
-  
-  depends_on = [azurerm_key_vault.main]
-}
-
-# =============================================
-# SECRET VARIABLES - DEVOPS AGENTS
-# =============================================
-# Purpose: Store sensitive variables separately from main variables
-# Usage: This file should be excluded from Git (.gitignore)
-#        Use terraform.tfvars or environment variables for values
-
-variable "azure_devops_org_url" {
-  description = "Azure DevOps organization URL (e.g., https://dev.azure.com/yourorg)"
-  type        = string
-  sensitive   = true
-}
-
-variable "azure_devops_bootstrap_pat" {
-  description = "Bootstrap PAT for creating agent PATs - requires 'Agent Pools (read, manage)' scope"
-  type        = string
-  sensitive   = true
-}
-
-variable "agent_pat_display_name" {
-  description = "Display name for the generated agent PAT"
-  type        = string
-  default     = "Terraform-Managed-Agent-PAT"
-}
-
-variable "agent_pat_scope" {
-  description = "Scopes for the generated agent PAT"
-  type        = list(string)
-  default     = ["AgentPools"]
-}
+# ============= RANDOM PASSWORD GENERATION =============
+# Note: This resource is defined here but depends on Key Vault
+# The actual resource is in R-Secrets.tf
