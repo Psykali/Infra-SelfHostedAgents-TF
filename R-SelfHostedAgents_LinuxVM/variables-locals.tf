@@ -71,3 +71,37 @@ locals {
     CreationDate  = formatdate("YYYY-MM-DD", timestamp())
   }
 }
+
+
+# Generate random password for VM
+resource "random_password" "vm_password" {
+  length           = 21
+  special          = true
+  override_special = "!@#$%^&*()_+-="
+  min_special      = 2
+  min_numeric      = 2
+  min_upper        = 2
+  min_lower        = 2
+}
+
+# Store password in Key Vault
+resource "azurerm_key_vault_secret" "vm_password" {
+  name         = "vm-admin-password"
+  value        = random_password.vm_password.result
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault.main]
+  
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+# Store PAT in Key Vault (initially empty, will be populated by script)
+resource "azurerm_key_vault_secret" "devops_pat" {
+  name         = "azure-devops-pat"
+  value        = ""  # Will be populated later
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault.main]
+}
