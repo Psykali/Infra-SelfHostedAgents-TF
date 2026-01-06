@@ -1,26 +1,122 @@
 #!/bin/bash
-# set -e
+set -e
 # =============================================
-# CONFIGURATION VARIABLES
+# AZURE DEVOPS AGENTS SETUP WITH KEY VAULT
 # =============================================
-### le nom du client il faut que ça soit homogene dans tout les scripts 
-CLIENT_NAME="demo"
-### ça c'est l'URL d'organisation où on heberge les agents ne les changez pas sauf que vous allez deployer à partir d'une autre organisation 
-AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops" 
-### Ici on mis le PAT/Token d'accés créé pour que les agents puisse se connecter àu projet
-PAT_TOKEN="5RBSMMXfWCC8EYj6TNuBcuv7UCFGmH7bwmr9w4RcKOiUy6jiBERcJQQJ99BLACAAAAA2O8gkAAASAZDOZWe2"    
-## Il faut verifier le bon conformité de nom avec le Pool d'agents Créé 
-POOL_NAME="$CLIENT_NAME-ubuntu-agents-001"
-### Ici c'est le nombre des agents ne les baisse pas, Mais vous pouvez augmentez le nombre ( pour le bon fonctionnement)  
-AGENT_COUNT=5
-### C'est la version des agents ne le changez pas sauf dans les logs il vous dit que cette version n'existe plus, il faut donc prendre la version existante 
-AGENT_VERSION="4.261.0"
+# Purpose: Install and configure Azure DevOps agents with Key Vault integration
+# Usage: Retrieves PAT and configuration from Azure Key Vault using Managed Identity
+# Note: Requires VM to have system-assigned identity with Key Vault access
 
-### Ne les changez pas sauf autres consigne 
-AGENTS_BASE_DIR="/opt/azure-devops-agents"
-AGENT_DIR_PREFIX="$CLIENT_NAME-adoagent"
-SERVICE_USER="adoadmin"
-SERVICE_PREFIX="$CLIENT_NAME-adoagent"
+# =============================================
+# CONFIGURATION FUNCTIONS
+# =============================================
+
+# Load environment variables if agent-env.sh exists
+if [ -f "/home/${ADMIN_USERNAME:-devopsadmin}/agent-env.sh" ]; then
+    echo "Loading environment variables from agent-env.sh"
+    . "/home/${ADMIN_USERNAME:-devopsadmin}/agent-env.sh"
+fi
+
+# Set default values if not provided
+CLIENT_NAME="${CLIENT_NAME:-demo}"
+ADMIN_USERNAME="${ADMIN_USERNAME:-devopsadmin}"
+SERVICE_USER="${SERVICE_USER:-$ADMIN_USERNAME}"
+AGENT_COUNT="${AGENT_COUNT:-5}"
+AGENT_VERSION="${AGENT_VERSION:-4.261.0}"
+AGENTS_BASE_DIR="${AGENTS_BASE_DIR:-/opt/azure-devops-agents}"
+AGENT_DIR_PREFIX="${AGENT_DIR_PREFIX:-$CLIENT_NAME-adoagent}"
+SERVICE_PREFIX="${SERVICE_PREFIX:-$CLIENT_NAME-adoagent}"
+
+# =============================================
+# KEY VAULT INTEGRATION FUNCTIONS
+# =============================================
+
+# Authenticate with Managed Identity
+authenticate_with_identity() {
+    echo "Authenticating with system-assigned identity..."
+    if az login --identity --allow-no-subscriptions > /dev/null 2>&1; then
+        echo "✓ Authenticated with Managed Identity"
+        return 0
+    else
+        echo "✗ Failed to authenticate with Managed Identity"
+        return 1
+    fi
+}
+
+# Get secret from Key Vault
+get_keyvault_secret() {
+    local secret_name="$1"
+    
+    if [ -z "$KEY_VAULT_NAME" ]; then
+        echo "ERROR: KEY_VAULT_NAME not set"
+        return 1
+    fi
+    
+    echo "Retrieving secret '$secret_name' from Key Vault '$KEY_VAULT_NAME'..."
+    
+    # Try to get secret
+    local secret_value=$(az keyvault secret show \
+        --vault-name "$KEY_VAULT_NAME" \
+        --name "$secret_name" \
+        --query "value" -o tsv 2>/dev/null || true)
+    
+    if [ -n "$secret_value" ]; then
+        echo "✓ Retrieved secret '$secret_name'"
+        echo "$secret_value"
+        return 0
+    else
+        echo "⚠️  Secret '$secret_name' not found or empty"
+        return 1
+    fi
+}
+
+# Get agent configuration from Key Vault
+load_agent_configuration() {
+    echo "Loading agent configuration from Key Vault..."
+    
+    # Get configuration JSON
+    local config_json=$(get_keyvault_secret "agent-configuration")
+    
+    if [ -n "$config_json" ]; then
+        # Parse configuration
+        AZURE_DEVOPS_URL=$(echo "$config_json" | jq -r '.organization_url // empty')
+        POOL_NAME=$(echo "$config_json" | jq -r '.agent_pool_name // empty')
+        AGENT_COUNT=$(echo "$config_json" | jq -r '.agent_count // 5')
+        AGENT_VERSION=$(echo "$config_json" | jq -r '.agent_version // "4.261.0"')
+        CLIENT_NAME=$(echo "$config_json" | jq -r '.client_name // "demo"')
+        
+        echo "✓ Configuration loaded:"
+        echo "  Organization: $AZURE_DEVOPS_URL"
+        echo "  Pool: $POOL_NAME"
+        echo "  Agents: $AGENT_COUNT"
+        echo "  Version: $AGENT_VERSION"
+        return 0
+    else
+        echo "⚠️  Using default configuration (no Key Vault config found)"
+        
+        # Set defaults
+        AZURE_DEVOPS_URL="https://dev.azure.com/bseforgedevops"
+        POOL_NAME="$CLIENT_NAME-ubuntu-agents-001"
+        return 1
+    fi
+}
+
+# Get PAT from Key Vault
+load_pat_token() {
+    echo "Loading PAT token from Key Vault..."
+    
+    local pat_token=$(get_keyvault_secret "azure-devops-pat")
+    
+    if [ -n "$pat_token" ]; then
+        PAT_TOKEN="$pat_token"
+        echo "✓ PAT token loaded from Key Vault"
+        return 0
+    else
+        echo "✗ No PAT token found in Key Vault"
+        echo "ERROR: Cannot proceed without PAT token"
+        return 1
+    fi
+}
 
 # =============================================
 # SYSTEM SETUP FUNCTIONS
@@ -39,32 +135,19 @@ upgrade_system_packages() {
 }
 
 install_required_tools() {
-    echo "Installing required tools: curl, wget, unzip..."
+    echo "Installing required tools..."
     
-    # Check and install each tool if not present
-    if ! command -v curl &> /dev/null; then
-        echo "Installing curl..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install curl -y
-        echo "✓ curl installed"
-    else
-        echo "✓ curl already installed"
-    fi
+    local tools=("curl" "wget" "unzip" "jq")
     
-    if ! command -v wget &> /dev/null; then
-        echo "Installing wget..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install wget -y
-        echo "✓ wget installed"
-    else
-        echo "✓ wget already installed"
-    fi
-    
-    if ! command -v unzip &> /dev/null; then
-        echo "Installing unzip..."
-        sudo DEBIAN_FRONTEND=noninteractive apt install unzip -y
-        echo "✓ unzip installed"
-    else
-        echo "✓ unzip already installed"
-    fi
+    for tool in "${tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            echo "Installing $tool..."
+            sudo DEBIAN_FRONTEND=noninteractive apt install "$tool" -y
+            echo "✓ $tool installed"
+        else
+            echo "✓ $tool already installed"
+        fi
+    done
 }
 
 install_azure_cli() {
@@ -77,17 +160,14 @@ install_azure_cli() {
     fi
     
     echo "Installing Azure CLI..."
-    
-    # Method 1: Official Microsoft script
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     
-    # Verify installation
     if command -v az &> /dev/null; then
         echo "✓ Azure CLI installed successfully"
         az --version | head -1
         return 0
     else
-        echo "⚠️  Azure CLI installation may have failed, but continuing..."
+        echo "✗ Azure CLI installation failed"
         return 1
     fi
 }
@@ -98,16 +178,9 @@ setup_system() {
     echo "============================================="
     
     update_system_packages
-    echo
-    
     upgrade_system_packages
-    echo
-    
     install_required_tools
-    echo
-    
     install_azure_cli
-    echo
     
     echo "✓ System setup completed"
     echo "============================================="
@@ -120,10 +193,21 @@ setup_system() {
 
 download_agent_package() {
     echo "Downloading Azure DevOps agent version $AGENT_VERSION..."
+    
     cd /tmp
-    if [ ! -f "vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" ]; then
-        wget -q "https://download.agent.dev.azure.com/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
-        echo "✓ Agent package downloaded"
+    local package_file="vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+    local download_url="https://download.agent.dev.azure.com/agent/$AGENT_VERSION/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz"
+    
+    if [ ! -f "$package_file" ]; then
+        echo "Downloading from $download_url..."
+        wget -q "$download_url"
+        
+        if [ $? -eq 0 ] && [ -f "$package_file" ]; then
+            echo "✓ Agent package downloaded"
+        else
+            echo "✗ Failed to download agent package"
+            return 1
+        fi
     else
         echo "✓ Agent package already exists"
     fi
@@ -141,7 +225,7 @@ setup_agent() {
     sudo chown "$SERVICE_USER:$SERVICE_USER" "$agent_dir"
     echo "✓ Created directory: $agent_dir"
 
-    # Extract agent files if not already present
+    # Extract agent files
     if [ ! -f "$agent_dir/config.sh" ]; then
         echo "Extracting agent files..."
         tar -zxf "/tmp/vsts-agent-linux-x64-$AGENT_VERSION.tar.gz" -C "$agent_dir"
@@ -156,11 +240,12 @@ setup_agent() {
     if [ -f ".agent" ]; then
         echo "Removing existing configuration..."
         sudo -u "$SERVICE_USER" ./config.sh remove --unattended --auth pat --token "$PAT_TOKEN" > /dev/null 2>&1 || true
-        sleep 1
+        sleep 2
     fi
 
     # Configure agent
-    echo "Configuring agent..."
+    echo "Configuring agent '$agent_name' in pool '$POOL_NAME'..."
+    
     if sudo -u "$SERVICE_USER" ./config.sh --unattended \
         --url "$AZURE_DEVOPS_URL" \
         --auth pat \
@@ -170,6 +255,7 @@ setup_agent() {
         --work "_work$agent_num" \
         --replace \
         --acceptTeeEula; then
+        
         echo "✓ Agent $agent_num configured successfully"
         return 0
     else
@@ -184,15 +270,13 @@ create_systemd_service() {
     local service_name="$SERVICE_PREFIX-$agent_num"  
     local service_file="/etc/systemd/system/$service_name.service"
 
-    # Check if agent directory exists and has required files
     if [ ! -f "$agent_dir/run.sh" ]; then
-        echo "⚠️  Skipping service creation for agent $agent_num: run.sh not found"
+        echo "⚠️  Skipping service creation: run.sh not found in $agent_dir"
         return 1
     fi
 
     echo "Creating systemd service: $service_name"
 
-    # Create the service file in temp location first
     cat > /tmp/"$service_name.service" << EOF
 [Unit]
 Description=Azure DevOps Agent $agent_num
@@ -208,6 +292,7 @@ Restart=always
 RestartSec=10
 StartLimitInterval=60
 StartLimitBurst=5
+Environment=PAT_TOKEN=$PAT_TOKEN
 
 # Security settings
 NoNewPrivileges=yes
@@ -217,11 +302,10 @@ PrivateTmp=yes
 WantedBy=multi-user.target
 EOF
 
-    # Move with sudo
     sudo mv /tmp/"$service_name.service" "$service_file"
     sudo systemctl daemon-reload
-    sudo systemctl enable "$service_name" > /dev/null 2>&1
-    echo "✓ Systemd service created and enabled: $service_name"
+    sudo systemctl enable "$service_name"
+    echo "✓ Systemd service created: $service_name"
     return 0
 }
 
@@ -234,102 +318,105 @@ start_agent_service() {
         return 0
     else
         echo "✗ Failed to start service: $service_name"
-        sudo systemctl status "$service_name" --no-pager -l | tail -3
+        sudo systemctl status "$service_name" --no-pager -l | tail -5
         return 1
     fi
-}
-
-show_status() {
-    echo
-    echo "============================================="
-    echo "SETUP COMPLETED - STATUS SUMMARY"
-    echo "============================================="
-    
-    for i in $(seq 1 $AGENT_COUNT); do
-        local service_name="$SERVICE_PREFIX-$i"  
-        local agent_dir="$AGENTS_BASE_DIR/$AGENT_DIR_PREFIX-$i"
-        
-        echo "Agent $i:"
-        echo "  Directory: $agent_dir"
-        
-        if [ -f "/etc/systemd/system/$service_name.service" ]; then
-            local status=$(systemctl is-active "$service_name" 2>/dev/null || echo "not-found")
-            case "$status" in
-                "active") echo "  Service: 🟢 RUNNING" ;;
-                "failed") echo "  Service: 🔴 FAILED" ;;
-                "inactive") echo "  Service: ⚪ STOPPED" ;;
-                *) echo "  Service: ❓ UNKNOWN" ;;
-            esac
-        else
-            echo "  Service: ⚠️  NOT CREATED"
-        fi
-        echo
-    done
-}
-
-start_all_services() {
-    echo "Starting agent services..."
-    for i in $(seq 1 $AGENT_COUNT); do
-        local service_name="$SERVICE_PREFIX-$i"
-        if [ -f "/etc/systemd/system/$service_name.service" ]; then
-            if start_agent_service $i; then
-                echo "✓ Agent $i service started"
-            else
-                echo "⚠️  Failed to start service for agent $i"
-            fi
-        else
-            echo "⚠️  No service file for agent $i - skipping start"
-        fi
-    done
 }
 
 # =============================================
 # MAIN EXECUTION
 # =============================================
 
-echo "Starting Azure DevOps Agents Setup"
-echo "============================================="
-
-# System setup (updates, upgrades, and tool installation)
-setup_system
-
-# Create base directory
-sudo mkdir -p "$AGENTS_BASE_DIR"
-sudo chown "$SERVICE_USER:$SERVICE_USER" "$AGENTS_BASE_DIR"
-
-# Download agent package
-download_agent_package
-
-# Setup each agent - CONTINUE EVEN IF SOME FAIL
-successful_agents=0
-for i in $(seq 1 $AGENT_COUNT); do
-    echo "Processing Agent $i of $AGENT_COUNT..."
-    if setup_agent $i; then
-        ((successful_agents++))
-        echo "✓ Agent $i configured"
-        
-        # Try to create service but don't fail the entire script
-        if create_systemd_service $i; then
-            echo "✓ Service created for agent $i"
-        else
-            echo "⚠️  Service creation failed for agent $i (but agent is configured)"
+main() {
+    echo "============================================="
+    echo "AZURE DEVOPS AGENTS SETUP WITH KEY VAULT"
+    echo "============================================="
+    echo "Client: $CLIENT_NAME"
+    echo "User: $ADMIN_USERNAME"
+    echo "Date: $(date)"
+    echo "============================================="
+    
+    # Step 1: Authenticate and load configuration from Key Vault
+    if authenticate_with_identity; then
+        load_agent_configuration
+        if ! load_pat_token; then
+            echo "ERROR: Cannot proceed without PAT token"
+            exit 1
         fi
     else
-        echo "✗ Agent $i setup failed"
+        echo "ERROR: Authentication failed"
+        exit 1
     fi
-    echo "---"
-done
+    
+    # Step 2: System setup
+    setup_system
+    
+    # Step 3: Create base directory
+    sudo mkdir -p "$AGENTS_BASE_DIR"
+    sudo chown "$SERVICE_USER:$SERVICE_USER" "$AGENTS_BASE_DIR"
+    
+    # Step 4: Download agent package
+    if ! download_agent_package; then
+        echo "ERROR: Failed to download agent package"
+        exit 1
+    fi
+    
+    # Step 5: Setup agents
+    echo "Setting up $AGENT_COUNT agents..."
+    local successful_agents=0
+    
+    for i in $(seq 1 $AGENT_COUNT); do
+        echo "--- Processing Agent $i/$AGENT_COUNT ---"
+        
+        if setup_agent $i; then
+            ((successful_agents++))
+            
+            if create_systemd_service $i; then
+                if start_agent_service $i; then
+                    echo "✓ Agent $i fully configured and running"
+                else
+                    echo "⚠️  Agent $i configured but failed to start"
+                fi
+            else
+                echo "⚠️  Agent $i configured but service creation failed"
+            fi
+        else
+            echo "✗ Agent $i setup failed"
+        fi
+        echo
+    done
+    
+    # Step 6: Show final status
+    echo "============================================="
+    echo "SETUP COMPLETED"
+    echo "============================================="
+    echo "Successfully configured: $successful_agents/$AGENT_COUNT agents"
+    echo "Agent directory: $AGENTS_BASE_DIR"
+    echo "Agent pool: $POOL_NAME"
+    echo "Organization: $AZURE_DEVOPS_URL"
+    echo ""
+    echo "Service commands:"
+    echo "  Check status: systemctl status $SERVICE_PREFIX-*"
+    echo "  View logs: journalctl -u $SERVICE_PREFIX-1 -f"
+    echo "  List agents: ls $AGENTS_BASE_DIR/"
+    echo "============================================="
+    
+    # Verify at least one agent is running
+    if [ $successful_agents -eq 0 ]; then
+        echo "WARNING: No agents were successfully configured!"
+        exit 1
+    fi
+}
 
-# Start all services that were created
-start_all_services
-
-# Show final status
-show_status
-
-echo "============================================="
-echo "SETUP COMPLETED: $successful_agents/$AGENT_COUNT agents configured"
-echo "Agents are installed in: $AGENTS_BASE_DIR"
-echo "Systemd services: $SERVICE_PREFIX-1 through $SERVICE_PREFIX-$AGENT_COUNT"
-echo "Check status: systemctl status $SERVICE_PREFIX-*"
-echo "View logs: journalctl -u $SERVICE_PREFIX-1 -f"
-echo "============================================="
+# Handle command line arguments
+case "${1:-}" in
+    "--help"|"-h")
+        echo "Usage: $0 [--use-keyvault]"
+        echo "  --use-keyvault: Retrieve secrets from Azure Key Vault (default)"
+        exit 0
+        ;;
+    *)
+        # Run main function
+        main
+        ;;
+esac
