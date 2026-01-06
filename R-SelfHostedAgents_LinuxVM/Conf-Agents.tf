@@ -32,7 +32,7 @@ resource "null_resource" "setup_devops_agents" {
   provisioner "file" {
     content = templatefile("${path.module}/agent-env.sh.tpl", {
       key_vault_name    = azurerm_key_vault.main.name
-      vm_resource_group = azurerm_resource_group.agent.name
+      vm_resource_group = azurerm_resource_group.vm_rg.name
       client_name       = var.client_name
       admin_username    = var.admin_username
       agent_count       = var.agent_count
