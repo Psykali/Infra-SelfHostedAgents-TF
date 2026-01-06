@@ -6,8 +6,8 @@
 
 resource "azurerm_public_ip" "main" {
   name                = local.pip_name
-  location            = azurerm_resource_group.network_rg.location
-  resource_group_name = azurerm_resource_group.network_rg.name
+  location            = azurerm_resource_group.vm_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
   allocation_method   = "Static"
 
   tags = merge(local.common_tags, {
