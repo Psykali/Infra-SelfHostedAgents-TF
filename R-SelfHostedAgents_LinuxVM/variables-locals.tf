@@ -1,14 +1,12 @@
 # =============================================
 # VARIABLES AND LOCALS - DEVOPS AGENTS
 # =============================================
-# Purpose: Define input variables and local values for DevOps agents infrastructure
-# Usage: Central configuration point - modify client_name and environment as needed
 
 # ============= INPUT VARIABLES =============
 variable "client_name" {
   description = "Client Acronyme between 2-4 miniscule letters (used in resource naming)"
   type        = string
-  default     = "client"  ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
+  default     = "demo"  # CHANGE to actual client name
 }
 
 variable "environment" {
@@ -54,11 +52,12 @@ variable "agent_version" {
 locals {
   # Base naming components
   sequence_number = "01"
-  workload_name   = "devops" ### CHANGE This With Client Acronyme between 2-4 miniscule letters (used in resource naming) 
+  workload_name   = "devops"
   
   # Resource Group Names (MS Naming Convention)
   network_rg_name = "rg-${var.client_name}-${local.workload_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
   agent_rg_name   = "rg-${var.client_name}-${local.workload_name}-agent-${var.environment}-${var.location_code}-${local.sequence_number}"
+  tfstate_rg_name = "rg-${var.client_name}-${local.workload_name}-tfstate-${var.environment}-${var.location_code}-${local.sequence_number}"
   
   # Network Resources
   vnet_name    = "vnet-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
@@ -71,8 +70,15 @@ locals {
   nic_name     = "nic-${local.vm_name}"
   pip_name     = "pip-${local.vm_name}"
   
-  # Key Vault
+  # Key Vault - 
   kv_name = "kv-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  
+  # Storage Account (for Terraform state) 
+  storage_name = "st${replace(var.client_name, "-", "")}${local.workload_name}${substr(var.environment, 0, 3)}${var.location_code}${local.sequence_number}"
+  
+  # Private Endpoints 
+  kv_pep_name   = "pep-${local.kv_name}"
+  kv_pep_nic_name = "nic-${local.kv_name}"
   
   # Agent Pool Name
   agent_pool_name = "${var.client_name}-ubuntu-agents-${local.sequence_number}"
