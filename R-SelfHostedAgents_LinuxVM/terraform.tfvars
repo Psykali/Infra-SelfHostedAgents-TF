@@ -7,7 +7,7 @@
 
 # Azure DevOps Configuration
 azure_devops_org_url       = "https://dev.azure.com/bseforgedevops"
-azure_devops_bootstrap_pat = "your-bootstrap-pat-token-here"
+azure_devops_bootstrap_pat = "3rWWIoIJYTKgzvtbpmGWVUN0QzdiJzeUiQYz67bt2UQF78WYsIsfJQQJ99CAACAAAAA2O8gkAAASAZDO3SzN"
 
 # Client Configuration
 client_name   = "demo"
