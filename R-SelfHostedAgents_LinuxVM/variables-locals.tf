@@ -1,7 +1,24 @@
 # =============================================
 # VARIABLES AND LOCALS - DEVOPS AGENTS
 # =============================================
+# ============ SECRET VARIABLES ===============
+# Purpose: Store sensitive variables
+# Usage: Use terraform.tfvars or environment variables
+variable "azure_devops_org_url" {
+  description = "Azure DevOps organization URL"
+  type        = string
+  sensitive   = true
+  ### To Be Changed to the URL of the AzureDevOps Organisation Where The Agents Pool is Kept
+  default     = "https://dev.azure.com/bseforgedevops" 
+}
 
+variable "azure_devops_pat" {
+  description = "Azure DevOps PAT for agents (create manually in DevOps portal)"
+  type        = string
+  sensitive   = true
+  ### To Be Changed To the PAT Created for the AzureDevOps Agents to be Registered to the AzureDevOps Organisation
+  default     = "Hga16IPIP3S4xZSAV91wspYV0v8CUlNJ9wGwGLV4GccoPd1dV1LcJQQJ99CAACAAAAA2O8gkAAASAZDO2ul1"
+}
 # ============= INPUT VARIABLES =============
 variable "client_name" {
   description = "Client Acronyme between 2-4 miniscule letters (used in resource naming)"
@@ -52,7 +69,7 @@ variable "agent_version" {
 locals {
   # Base naming components
   sequence_number = "01"
-  workload_name   = "ado"
+  workload_name   = "ado" ### Workload/Project Acronyme 2-4 miniscul Letters
   
   # Resource Group Names (MS Naming Convention)
   network_rg_name = "rg-${var.client_name}-${local.workload_name}-network-${var.environment}-${var.location_code}-${local.sequence_number}"
