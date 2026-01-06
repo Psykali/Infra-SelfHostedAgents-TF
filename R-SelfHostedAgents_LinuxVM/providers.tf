@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    azuredevops = {
+      source  = "microsoft/azuredevops"
+      version = "~> 0.10"
+    }
   }
 }
 
@@ -29,4 +33,9 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+}
+
+provider "azuredevops" {
+  org_service_url       = var.azure_devops_org_url
+  personal_access_token = var.azure_devops_bootstrap_pat
 }
