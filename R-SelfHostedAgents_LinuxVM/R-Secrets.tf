@@ -25,6 +25,18 @@ resource "azurerm_key_vault_secret" "vm_password" {
   })
 }
 
+# Store DevOps PAT in Key Vault (from variable)
+resource "azurerm_key_vault_secret" "devops_pat" {
+  name         = "azure-devops-pat"
+  value        = var.azure_devops_pat  # Get from variable
+  key_vault_id = azurerm_key_vault.main.id
+  
+  tags = merge(local.common_tags, {
+    SecretType     = "Azure DevOps PAT"
+    ExpirationDate = formatdate("YYYY-MM-DD", timeadd(timestamp(), "8760h"))
+  })
+}
+
 # Store Agent Pool configuration
 resource "azurerm_key_vault_secret" "agent_config" {
   name = "agent-configuration"
