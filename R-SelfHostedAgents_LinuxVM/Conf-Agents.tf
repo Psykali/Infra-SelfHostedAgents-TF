@@ -10,8 +10,10 @@ resource "null_resource" "setup_devops_agents" {
     azurerm_key_vault.main,
     azurerm_key_vault_secret.vm_password,
     azurerm_key_vault_secret.devops_pat,
-    azurerm_key_vault_secret.agent_config
+    azurerm_key_vault_secret.agent_config,
+    azurerm_key_vault_access_policy.vm_identity  
   ]
+  
 
   connection {
     type     = "ssh"
