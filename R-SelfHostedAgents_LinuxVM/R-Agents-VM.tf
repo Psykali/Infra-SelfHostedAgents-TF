@@ -10,7 +10,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   location            = azurerm_resource_group.vm_rg.location
   size                = var.vm_size
   admin_username      = var.admin_username
-  admin_password      = var.admin_password
+  admin_password      = random_password.vm_password.result  # Use generated password
   disable_password_authentication = false
   network_interface_ids = [
     azurerm_network_interface.main.id,
@@ -41,4 +41,9 @@ resource "azurerm_linux_virtual_machine" "main" {
     Backup          = "false"
     Monitoring      = "basic"
   })
+
+  depends_on = [
+    azurerm_key_vault_secret.vm_password,
+    random_password.vm_password
+  ]
 }
