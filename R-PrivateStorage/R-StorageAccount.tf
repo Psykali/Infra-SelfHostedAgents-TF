@@ -23,21 +23,6 @@ resource "azurerm_storage_account" "private" {
   tags = local.common_tags
 }
 
-# Create dedicated subnet for private endpoint (10.0.0.32/27)
-resource "azurerm_subnet" "private_endpoint" {
-  name                 = local.private_endpoint_subnet_name
-  resource_group_name  = local.networking_rg_name
-  virtual_network_name = local.vnet_name
-  address_prefixes     = ["10.0.0.32/27"]
-  
-  # Enable private endpoints
-  private_endpoint_network_policies = "Enabled"
-  
-  # Service endpoint for storage
-  service_endpoints = ["Microsoft.Storage"]
-}
-
-
 # =============================================
 # CONTAINER FOR TERRAFORM STATE
 # =============================================
