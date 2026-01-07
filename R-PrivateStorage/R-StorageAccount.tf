@@ -1,74 +1,38 @@
 # =============================================
-# PRIVATE STORAGE ACCOUNT FOR TERRAFORM STATE
+# PRIVATE STORAGE ACCOUNT
 # =============================================
-# Purpose: Create private storage account for Terraform state
-# Usage: Backend storage with private endpoint connectivity
+# Purpose: Create private storage for Terraform state
+# Usage: VM will connect via private endpoint
+# Features: No public access, private endpoint only
 
+# Resource Group for storage
+resource "azurerm_resource_group" "storage" {
+  name     = local.storage_rg
+  location = var.location
+  tags     = local.tags
+}
+
+# Private Storage Account
 resource "azurerm_storage_account" "private" {
-  name                     = local.private_storage_name
+  name                     = local.storage_name
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS" ### For minimum cost unless the demand of the client
+  account_replication_type = "ZRS" # for minimum cost unless other demande of the client
   min_tls_version          = "TLS1_2"
   
-  # 🔒 Private storage - no public access
+  # 🔒 Critical: Disable public access
   public_network_access_enabled = false
   
-  # Enable blob storage
-  account_kind = "StorageV2"
-  
-  # Enable blob properties
-  blob_properties {
-    delete_retention_policy {
-      days = 7
-    }
-  }
-
-  tags = merge(local.common_tags, {
-    Description = "Private storage for Terraform state files"
-    Critical    = "true"  # Contains infrastructure state
+  tags = merge(local.tags, {
+    Component = "storage"
+    Purpose   = "terraform-state"
   })
-  
-  lifecycle {
-    prevent_destroy = true  # Critical: Contains Terraform state!
-  }
 }
 
-# Network rules - deny all except private endpoint
-resource "azurerm_storage_account_network_rules" "private" {
-  storage_account_id = azurerm_storage_account.private.id
-  
-  # DENY all traffic by default
-  default_action = "Deny"
-  
-  # Allow private endpoint subnet
-  virtual_network_subnet_ids = [azurerm_subnet.private_endpoint.id]
-  
-  # Allow Azure services (required for private endpoints)
-  bypass = ["AzureServices"]
-}
-
-# Wait for storage account and network rules to propagate
-resource "null_resource" "wait_for_storage_setup" {
-  depends_on = [
-    azurerm_storage_account.private,
-    azurerm_storage_account_network_rules.private,
-  ]
-
-  provisioner "local-exec" {
-    command = "echo 'Waiting 30 seconds for storage account to fully provision...' && sleep 30"
-  }
-}
-
-# Create blob container for Terraform state
+# Container for Terraform state
 resource "azurerm_storage_container" "tfstate" {
-  name                  = local.tfstate_container_name
+  name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
-
-  depends_on = [
-    null_resource.wait_for_storage_setup,
-    azurerm_private_endpoint.storage,
-  ]
 }
