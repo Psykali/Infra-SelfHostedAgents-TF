@@ -10,12 +10,13 @@ data "azurerm_virtual_network" "main" {
   resource_group_name = local.networking_rg_name 
 }
 
+
+# Get the existing subnet where VM is located
 data "azurerm_subnet" "agents" {
   name                 = local.subnet_name
-  virtual_network_name = data.azurerm_virtual_network.main.name
-  resource_group_name  = data.azurerm_virtual_network.main.resource_group_name
+  resource_group_name  = local.networking_rg_name
+  virtual_network_name = local.vnet_name
 }
-
 # =============================================
 # OUTPUTS
 # =============================================
