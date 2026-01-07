@@ -25,7 +25,7 @@ data "azurerm_network_interface" "pep_nic" {
 
 # Verify container was created
 resource "null_resource" "verify_container" {
-  depends_on = [null_resource.create_container_via_private_endpoint]
+  depends_on = [azurerm_storage_container.tfstate]  
 
   provisioner "local-exec" {
     command = <<EOT
@@ -41,7 +41,7 @@ resource "null_resource" "verify_container" {
         --name ${local.tfstate_container_name} \
         --account-name ${azurerm_storage_account.private.name} \
         --account-key "$STORAGE_KEY" \
-        --auth-mode login
+        --auth-mode key
       
       echo "✅ Container verification complete"
     EOT
@@ -66,6 +66,7 @@ echo "=============================================="
 echo "Storage Account: ${azurerm_storage_account.private.name}"
 echo "Private Endpoint: ${azurerm_private_endpoint.storage.name}"
 echo "Private IP: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}"
+echo "Container: ${local.tfstate_container_name}"
 echo "=============================================="
 
 # 1. Authenticate with VM's managed identity
@@ -76,24 +77,18 @@ az login --identity --allow-no-subscriptions
 # 2. Test DNS resolution via Azure-provided DNS
 echo ""
 echo "2. Testing DNS resolution..."
-echo "Testing: nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net"
 nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net
 
-# 3. Test direct private endpoint access
+# 3. Test storage access via managed identity
 echo ""
-echo "3. Testing private endpoint connectivity..."
-echo "Private IP should be: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}"
-
-# 4. Test storage access via managed identity
-echo ""
-echo "4. Testing storage access via managed identity..."
+echo "3. Testing storage access via managed identity..."
 az storage container list \
   --account-name ${azurerm_storage_account.private.name} \
   --auth-mode login
 
-# 5. Create and upload test file
+# 4. Create and upload test file
 echo ""
-echo "5. Creating test file..."
+echo "4. Creating test file..."
 echo "✅ Private connection test successful at $(date)" > /tmp/private-test.txt
 echo "Storage: ${azurerm_storage_account.private.name}" >> /tmp/private-test.txt
 echo "Endpoint: ${azurerm_private_endpoint.storage.name}" >> /tmp/private-test.txt
