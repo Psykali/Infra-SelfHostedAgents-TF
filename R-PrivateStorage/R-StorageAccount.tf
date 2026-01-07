@@ -5,13 +5,6 @@
 # Usage: VM will connect via private endpoint
 # Features: No public access, private endpoint only
 
-# Resource Group for storage
-resource "azurerm_resource_group" "storage" {
-  name     = local.storage_rg
-  location = var.location
-  tags     = local.tags
-}
-
 # Private Storage Account
 resource "azurerm_storage_account" "private" {
   name                     = local.storage_name
