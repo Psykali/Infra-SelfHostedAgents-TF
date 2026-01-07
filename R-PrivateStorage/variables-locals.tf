@@ -4,10 +4,11 @@
 # Purpose: Define input variables and local values for storage account
 # Usage: Central configuration - must match client_name from agents deployment
 
+# ============= INPUT VARIABLES =============
 variable "client_name" {
   description = "Client Acronyme 2-4 minisule letters (MUST match agents deployment)"
   type        = string
-  default     = "demo"
+  default     = "demo"  # MUST BE SAME AS IN AGENTS DEPLOYMENT
 }
 
 variable "environment" {
@@ -30,7 +31,7 @@ variable "location_code" {
 locals {
   # Base naming components
   sequence_number = "01"
-  workload_name   = "ado"
+  workload_name   = "ado" # MUST BE SAME AS IN AGENTS DEPLOYMENT
   storage_suffix  = "tfstate"
   
   # Resource Group Names
@@ -49,8 +50,8 @@ locals {
   
   # Private Endpoint
   private_endpoint_subnet_name = "snet-${var.client_name}-${local.workload_name}-pep-${var.environment}-${var.location_code}-${local.sequence_number}"
-  private_endpoint_name = "pep-st${replace(var.client_name, "-", "")}${local.workload_name}${substr(var.environment, 0, 3)}${var.location_code}${local.sequence_number}"
-  private_endpoint_connection_name = "pepcon-st${replace(var.client_name, "-", "")}${local.workload_name}${substr(var.environment, 0, 3)}${var.location_code}${local.sequence_number}"
+  private_endpoint_name = "pep-${local.private_storage_name}"
+  private_endpoint_connection_name = "pepcon-${local.private_storage_name}"
   
   # Common Tags
   common_tags = {
