@@ -1,5 +1,5 @@
 # =============================================
-# OUTPUTS
+# OUTPUTS 
 # =============================================
 # Purpose: Show deployment results
 # Usage: Copy values for Agents Terraform backend config
@@ -19,35 +19,36 @@ output "private_endpoint_ip" {
   description = "Private IP address assigned to the endpoint"
 }
 
-output "backend_config" {
+output "backend_configuration" {
   value = <<EOT
+==============================================
+🔧 BACKEND CONFIGURATION FOR AGENTS
+==============================================
 
-  ==============================================
-  🔧 BACKEND CONFIGURATION FOR AGENTS
-  ==============================================
-  
-  Add this to AgentVM/providers.tf:
+Add this to AgentVM/providers.tf:
 
-  terraform {
-    backend "azurerm" {
-      resource_group_name  = "${azurerm_resource_group.storage.name}"
-      storage_account_name = "${azurerm_storage_account.private.name}"
-      container_name       = "tfstate"
-      key                  = "agents.terraform.tfstate"
-    }
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "${azurerm_resource_group.storage.name}"
+    storage_account_name = "${azurerm_storage_account.private.name}"
+    container_name       = "tfstate"
+    key                  = "agents.terraform.tfstate"
   }
-  
-  ==============================================
-  ✅ DEPLOYMENT SUCCESSFUL
-  ==============================================
-  Storage: ${azurerm_storage_account.private.name}
-  Endpoint: ${azurerm_private_endpoint.storage.name}
-  Private IP: ${azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address}
-  
-  💡 Next: Update Agents backend config and run:
-  terraform init -migrate-state
-  ==============================================
-  EOT
+}
+
+==============================================
+✅ DEPLOYMENT SUCCESSFUL
+==============================================
+Storage: ${azurerm_storage_account.private.name}
+Private Endpoint: pep-${azurerm_storage_account.private.name}
+Private IP: ${azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address}
+
+💡 Next Steps:
+1. Update AgentVM/providers.tf with above config
+2. Run in AgentVM/: terraform init -migrate-state
+3. Verify: terraform state list
+==============================================
+EOT
   
   description = "Instructions for configuring Terraform backend"
 }
