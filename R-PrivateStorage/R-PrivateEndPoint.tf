@@ -42,9 +42,7 @@ resource "null_resource" "wait_for_private_endpoint" {
   ]
 
   provisioner "local-exec" {
-    command = <<EOT
-      echo "Waiting for private endpoint to propagate (60 seconds)..."
-      sleep 60
-    EOT
+    command = "sleep 60"
+    interpreter = ["/bin/sh", "-c"]
   }
 }
