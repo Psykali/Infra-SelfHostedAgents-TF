@@ -1,54 +1,70 @@
 # =============================================
-# OUTPUTS 
+# DATA SOURCES AND OUTPUTS - STORAGE ACCOUNT
 # =============================================
-# Purpose: Show deployment results
-# Usage: Copy values for Agents Terraform backend config
+
+data "azurerm_client_config" "current" {}
+
+# Get existing network from agents deployment
+data "azurerm_virtual_network" "main" {
+  name                = local.vnet_name 
+  resource_group_name = local.networking_rg_name 
+}
+
+data "azurerm_subnet" "agents" {
+  name                 = local.subnet_name
+  virtual_network_name = data.azurerm_virtual_network.main.name
+  resource_group_name  = data.azurerm_virtual_network.main.resource_group_name
+}
+
+# =============================================
+# OUTPUTS
+# =============================================
 
 output "storage_account_name" {
-  value       = azurerm_storage_account.private.name
-  description = "Name of the private storage account"
+  value = azurerm_storage_account.private.name
+}
+
+output "storage_container_name" {
+  value = azurerm_storage_container.tfstate.name
 }
 
 output "storage_resource_group" {
-  value       = azurerm_resource_group.storage.name
-  description = "Resource group containing the storage"
+  value = azurerm_resource_group.storage.name
 }
 
-output "private_endpoint_ip" {
-  value       = azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address
-  description = "Private IP address assigned to the endpoint"
+output "vm_subnet_id" {
+  value = data.azurerm_subnet.agents.id
 }
 
-output "backend_configuration" {
+output "private_endpoint_status" {
   value = <<EOT
-==============================================
-🔧 BACKEND CONFIGURATION FOR AGENTS
-==============================================
 
-Add this to AgentVM/providers.tf:
-
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "${azurerm_resource_group.storage.name}"
-    storage_account_name = "${azurerm_storage_account.private.name}"
-    container_name       = "tfstate"
-    key                  = "agents.terraform.tfstate"
-  }
-}
-
-==============================================
-✅ DEPLOYMENT SUCCESSFUL
-==============================================
-Storage: ${azurerm_storage_account.private.name}
-Private Endpoint: pep-${azurerm_storage_account.private.name}
-Private IP: ${azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address}
-
-💡 Next Steps:
-1. Update AgentVM/providers.tf with above config
-2. Run in AgentVM/: terraform init -migrate-state
-3. Verify: terraform state list
-==============================================
-EOT
+  ==============================================
+  ✅ PRIVATE STORAGE ACCOUNT DEPLOYED
+  ==============================================
+  Storage Account: ${azurerm_storage_account.private.name}
+  Container: ${azurerm_storage_container.tfstate.name}
+  Resource Group: ${azurerm_resource_group.storage.name}
+  Private Endpoint: ${local.private_endpoint_name}
+  VM Subnet: ${data.azurerm_subnet.agents.name}
   
-  description = "Instructions for configuring Terraform backend"
+  🔧 Terraform Backend Configuration:
+  
+  Add this to AgentVM/providers.tf:
+  
+  terraform {
+    backend "azurerm" {
+      resource_group_name  = "${azurerm_resource_group.storage.name}"
+      storage_account_name = "${azurerm_storage_account.private.name}"
+      container_name       = "tfstate"
+      key                  = "agents.terraform.tfstate"
+    }
+  }
+  
+  💡 Next Steps:
+  1. Update AgentVM/providers.tf with above config
+  2. Run: terraform init -migrate-state
+  3. SSH to VM and test: nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net
+  ==============================================
+  EOT
 }
