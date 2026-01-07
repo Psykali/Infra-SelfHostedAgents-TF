@@ -10,7 +10,7 @@ resource "azurerm_storage_account" "private" {
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS"
+  account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
   
   # 🔒 Critical: Disable public access
