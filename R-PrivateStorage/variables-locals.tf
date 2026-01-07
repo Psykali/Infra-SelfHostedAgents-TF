@@ -1,8 +1,8 @@
 # =============================================
 # VARIABLES AND LOCALS - STORAGE ACCOUNT
 # =============================================
-# Purpose: Configuration for private storage account
-# Usage: Must match the agents deployment values exactly
+# Purpose: Define input variables and local values for storage account
+# Usage: Central configuration - must match client_name from agents deployment
 
 variable "client_name" {
   description = "Client Acronyme 2-4 minisule letters (MUST match agents deployment)"
