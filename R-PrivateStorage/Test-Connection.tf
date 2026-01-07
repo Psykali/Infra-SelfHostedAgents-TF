@@ -41,7 +41,7 @@ resource "null_resource" "verify_container" {
         --name ${local.tfstate_container_name} \
         --account-name ${azurerm_storage_account.private.name} \
         --account-key "$STORAGE_KEY" \
-        --auth-mode key
+        --auth-mode login
       
       echo "✅ Container verification complete"
     EOT
