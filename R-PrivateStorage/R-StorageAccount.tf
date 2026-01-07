@@ -1,9 +1,8 @@
 # =============================================
-# PRIVATE STORAGE ACCOUNT
+# PRIVATE STORAGE ACCOUNT (MVP)
 # =============================================
 # Purpose: Create private storage for Terraform state
 # Usage: VM will connect via private endpoint
-# Features: No public access, private endpoint only
 
 # Private Storage Account
 resource "azurerm_storage_account" "private" {
@@ -11,16 +10,29 @@ resource "azurerm_storage_account" "private" {
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS" # for minimum cost unless other demande of the client
+  account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
   
   # 🔒 Critical: Disable public access
   public_network_access_enabled = false
   
-  tags = merge(local.tags, {
-    Component = "storage"
-    Purpose   = "terraform-state"
+  tags = merge(local.common_tags, {
+    Purpose = "terraform-state"
   })
+}
+
+# Network Rules - Allow only private endpoint
+resource "azurerm_storage_account_network_rules" "private" {
+  storage_account_id = azurerm_storage_account.private.id
+  
+  default_action = "Deny"  # Block all public access
+  
+  # Allow traffic from VM subnet (via private endpoint)
+  # Will be updated after private endpoint is created
+  virtual_network_subnet_ids = []
+  
+  # Required for private endpoint to work
+  bypass = ["AzureServices"]
 }
 
 # Container for Terraform state
@@ -28,4 +40,8 @@ resource "azurerm_storage_container" "tfstate" {
   name                  = "tfstate"
   storage_account_name  = azurerm_storage_account.private.name
   container_access_type = "private"
+  
+  depends_on = [
+    azurerm_storage_account_network_rules.private
+  ]
 }
