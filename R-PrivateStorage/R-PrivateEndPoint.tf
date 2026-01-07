@@ -2,7 +2,7 @@
 # PRIVATE ENDPOINT - STORAGE ACCOUNT
 # =============================================
 # Purpose: Create private endpoint for direct storage access
-# FIXED: Removed custom network_interface configuration
+# Note: Uses dedicated subnet for private endpoints (10.0.0.32/27)
 
 resource "azurerm_private_endpoint" "storage" {
   name                = local.private_endpoint_name
@@ -16,19 +16,31 @@ resource "azurerm_private_endpoint" "storage" {
     subresource_names              = ["blob"]
     is_manual_connection           = false
   }
+
+  tags = merge(local.common_tags, {
+    Description = "Private endpoint for Terraform state storage"
+  })
 }
 
 ### ------------------------------------------------
-### Dedicated subnet for private endpoints (no DNS)
+### Dedicated subnet for private endpoints
 ### ------------------------------------------------
 resource "azurerm_subnet" "private_endpoint" {
   name                 = local.private_endpoint_subnet_name
   resource_group_name  = local.networking_rg_name
   virtual_network_name = local.vnet_name
   address_prefixes     = ["10.0.0.32/27"]
-
+  
+  # Private endpoint policies
+  private_endpoint_network_policies = "Enabled"
+  
+  # Service endpoint for storage
   service_endpoints = ["Microsoft.Storage"]
   
-  # Allow private-endpoint policies to be applied
-  private_endpoint_network_policies = "Enabled"
+  lifecycle {
+    ignore_changes = [
+      # Ignore changes to service endpoints as they're managed by Azure
+      service_endpoints,
+    ]
+  }
 }
