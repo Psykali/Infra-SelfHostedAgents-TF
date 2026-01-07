@@ -1,5 +1,5 @@
 # =============================================
-# PRIVATE ENDPOINT CONNECTION (MVP)
+# PRIVATE ENDPOINT CONNECTION
 # =============================================
 # Purpose: Direct connection from VM subnet to storage
 # Usage: VM uses this private endpoint to access storage
