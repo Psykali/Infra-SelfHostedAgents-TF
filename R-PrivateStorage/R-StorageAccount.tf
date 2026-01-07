@@ -37,13 +37,6 @@ resource "azurerm_storage_container" "tfstate" {
   depends_on = [azurerm_storage_account.private]
 }
 
-# Get the existing subnet where VM is located
-data "azurerm_subnet" "agents" {
-  name                 = local.subnet_name
-  resource_group_name  = local.networking_rg_name
-  virtual_network_name = local.vnet_name
-}
-
 # Network Rules - allow VM subnet via service endpoint
 resource "azurerm_storage_account_network_rules" "private" {
   storage_account_id = azurerm_storage_account.private.id
