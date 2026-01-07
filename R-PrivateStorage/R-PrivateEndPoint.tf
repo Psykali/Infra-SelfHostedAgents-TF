@@ -9,7 +9,7 @@ resource "azurerm_private_endpoint" "storage" {
   name                = local.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
-  subnet_id           = azurerm_subnet.private_endpoint.id
+  subnet_id           = data.azurerm_subnet.private_endpoint.id
 
   private_service_connection {
     name                           = local.private_endpoint_connection_name
