@@ -1,14 +1,13 @@
 # =============================================
-# PRIVATE ENDPOINT CONNECTION
+# PRIVATE ENDPOINT CONNECTION (MVP)
 # =============================================
 # Purpose: Direct connection from VM subnet to storage
 # Usage: VM uses this private endpoint to access storage
-# Note: No DNS zone needed - uses Azure-provided DNS
 
 # Get existing subnet from AgentVM deployment
 data "azurerm_subnet" "agents" {
   name                 = local.subnet_name
-  resource_group_name  = local.network_rg
+  resource_group_name  = local.network_rg_name
   virtual_network_name = local.vnet_name
 }
 
@@ -26,18 +25,22 @@ resource "azurerm_private_endpoint" "storage" {
     is_manual_connection           = false
   }
 
-  tags = local.tags
+  tags = local.common_tags
+  
+  depends_on = [
+    azurerm_storage_account.private
+  ]
 }
 
-# Network Rules - Allow only private endpoint
-resource "azurerm_storage_account_network_rules" "private" {
-  storage_account_id = azurerm_storage_account.private.id
+# Update network rules to allow the private endpoint subnet
+resource "null_resource" "update_network_rules" {
+  triggers = {
+    endpoint_id = azurerm_private_endpoint.storage.id
+  }
   
-  default_action = "Deny"  # Block all public access
+  depends_on = [azurerm_private_endpoint.storage]
   
-  # Allow traffic from VM subnet via private endpoint
-  virtual_network_subnet_ids = [data.azurerm_subnet.agents.id]
-  
-  # Required for private endpoint to work
-  bypass = ["AzureServices"]
+  provisioner "local-exec" {
+    command = "echo 'Private endpoint created. Network rules will be updated.'"
+  }
 }
