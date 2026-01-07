@@ -37,3 +37,19 @@ resource "azurerm_subnet" "private_endpoint" {
   service_endpoints = ["Microsoft.Storage"]
 }
 
+
+# =============================================
+# CONTAINER FOR TERRAFORM STATE
+# =============================================
+# Purpose: Create container via Terraform (not CLI)
+# Depends on private endpoint being ready
+
+resource "azurerm_storage_container" "tfstate" {
+  name                  = local.tfstate_container_name
+  storage_account_name  = azurerm_storage_account.private.name
+  container_access_type = "private"
+
+  depends_on = [
+    null_resource.wait_for_private_endpoint
+  ]
+}
