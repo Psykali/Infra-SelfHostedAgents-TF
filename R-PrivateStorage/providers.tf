@@ -1,8 +1,7 @@
 # =============================================
-# TERRAFORM PROVIDERS - STORAGE ACCOUNT
+# TERRAFORM PROVIDERS 
 # =============================================
-# Purpose: Configure Terraform providers for storage account deployment
-# Note: Initial deployment uses local state, then migrate to this storage
+# Purpose: Configure Azure provider
 
 terraform {
   required_version = ">= 1.0"
@@ -16,9 +15,5 @@ terraform {
 }
 
 provider "azurerm" {
-  features {
-    resource_group {
-      prevent_deletion_if_contains_resources = true  # Protect storage RG
-    }
-  }
+  features {}
 }
