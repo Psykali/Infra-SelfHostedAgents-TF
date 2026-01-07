@@ -1,5 +1,5 @@
 # =============================================
-# PRIVATE ENDPOINT CONNECTION
+# PRIVATE ENDPOINT CONNECTION (MVP)
 # =============================================
 # Purpose: Direct connection from VM subnet to storage
 # Usage: VM uses this private endpoint to access storage
@@ -28,19 +28,7 @@ resource "azurerm_private_endpoint" "storage" {
   tags = local.common_tags
   
   depends_on = [
-    azurerm_storage_account.private
+    azurerm_storage_account.private,
+    azurerm_storage_account_network_rules.private
   ]
-}
-
-# Update network rules to allow the private endpoint subnet
-resource "null_resource" "update_network_rules" {
-  triggers = {
-    endpoint_id = azurerm_private_endpoint.storage.id
-  }
-  
-  depends_on = [azurerm_private_endpoint.storage]
-  
-  provisioner "local-exec" {
-    command = "echo 'Private endpoint created. Network rules will be updated.'"
-  }
 }
