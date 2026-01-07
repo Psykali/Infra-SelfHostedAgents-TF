@@ -1,46 +1,43 @@
 # =============================================
-# PRIVATE ENDPOINT - STORAGE ACCOUNT
+# PRIVATE ENDPOINT CONNECTION
 # =============================================
-# Purpose: Create private endpoint for direct storage access
-# Note: Uses dedicated subnet for private endpoints (10.0.0.32/27)
+# Purpose: Direct connection from VM subnet to storage
+# Usage: VM uses this private endpoint to access storage
+# Note: No DNS zone needed - uses Azure-provided DNS
 
+# Get existing subnet from AgentVM deployment
+data "azurerm_subnet" "agents" {
+  name                 = local.subnet_name
+  resource_group_name  = local.network_rg
+  virtual_network_name = local.vnet_name
+}
+
+# Private Endpoint for Storage Blob service
 resource "azurerm_private_endpoint" "storage" {
-  name                = local.private_endpoint_name
-  location            = azurerm_resource_group.storage.location
+  name                = "pep-${local.storage_name}"
+  location            = var.location
   resource_group_name = azurerm_resource_group.storage.name
-  subnet_id           = azurerm_subnet.private_endpoint.id
+  subnet_id           = data.azurerm_subnet.agents.id  # Connect to VM's subnet
 
   private_service_connection {
-    name                           = local.private_endpoint_connection_name
+    name                           = "pepcon-${local.storage_name}"
     private_connection_resource_id = azurerm_storage_account.private.id
-    subresource_names              = ["blob"]
+    subresource_names              = ["blob"]  # Allow blob access
     is_manual_connection           = false
   }
 
-  tags = merge(local.common_tags, {
-    Description = "Private endpoint for Terraform state storage"
-  })
+  tags = local.tags
 }
 
-### ------------------------------------------------
-### Dedicated subnet for private endpoints
-### ------------------------------------------------
-resource "azurerm_subnet" "private_endpoint" {
-  name                 = local.private_endpoint_subnet_name
-  resource_group_name  = local.networking_rg_name
-  virtual_network_name = local.vnet_name
-  address_prefixes     = ["10.0.0.32/27"]
+# Network Rules - Allow only private endpoint
+resource "azurerm_storage_account_network_rules" "private" {
+  storage_account_id = azurerm_storage_account.private.id
   
-  # Private endpoint policies
-  private_endpoint_network_policies = "Enabled"
+  default_action = "Deny"  # Block all public access
   
-  # Service endpoint for storage
-  service_endpoints = ["Microsoft.Storage"]
+  # Allow traffic from VM subnet via private endpoint
+  virtual_network_subnet_ids = [data.azurerm_subnet.agents.id]
   
-  lifecycle {
-    ignore_changes = [
-      # Ignore changes to service endpoints as they're managed by Azure
-      service_endpoints,
-    ]
-  }
+  # Required for private endpoint to work
+  bypass = ["AzureServices"]
 }
