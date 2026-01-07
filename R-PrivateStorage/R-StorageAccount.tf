@@ -9,7 +9,7 @@ resource "azurerm_storage_account" "private" {
   resource_group_name      = azurerm_resource_group.storage.name
   location                 = azurerm_resource_group.storage.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS"
+  account_replication_type = "ZRS" ### For minimum cost unless the demand of the client
   min_tls_version          = "TLS1_2"
   
   # 🔒 Private storage - no public access
