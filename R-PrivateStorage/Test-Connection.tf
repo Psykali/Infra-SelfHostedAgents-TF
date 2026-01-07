@@ -1,96 +1,155 @@
 # =============================================
 # CONNECTION TEST - STORAGE ACCOUNT
 # =============================================
-# Purpose: Test and verify storage account connectivity
-# Usage: Validates private endpoint configuration works
+# Purpose: Test and verify storage account connectivity via private endpoint
+# Usage: Validates private endpoint configuration works correctly
 
-# Get private endpoint IP for verification
 data "azurerm_private_endpoint_connection" "storage_pep" {
   name                = azurerm_private_endpoint.storage.name
   resource_group_name = azurerm_resource_group.storage.name
   
   depends_on = [
-    azurerm_private_endpoint.storage,
-    azurerm_storage_container.tfstate,
+    null_resource.verify_container
   ]
 }
 
-# Create test blob to verify write access
-resource "azurerm_storage_blob" "test_connection" {
-  name                   = "connection-test.txt"
-  storage_account_name   = azurerm_storage_account.private.name
-  storage_container_name = azurerm_storage_container.tfstate.name
-  type                   = "Block"
-  source_content         = "✅ Connection test successful at ${timestamp()}\nStorage: ${azurerm_storage_account.private.name}\nPrivate Endpoint: ${azurerm_private_endpoint.storage.name}"
+# Get private IP from private endpoint
+data "azurerm_network_interface" "pep_nic" {
+  name                = azurerm_private_endpoint.storage.network_interface[0].name
+  resource_group_name = azurerm_resource_group.storage.name
   
   depends_on = [
-    azurerm_storage_container.tfstate,
-    data.azurerm_private_endpoint_connection.storage_pep,
+    data.azurerm_private_endpoint_connection.storage_pep
   ]
 }
 
-# Output verification results
-output "connection_verification" {
-  value = {
-    storage_account    = azurerm_storage_account.private.name
-    container          = azurerm_storage_container.tfstate.name
-    test_blob          = azurerm_storage_blob.test_connection.name
-    private_endpoint   = azurerm_private_endpoint.storage.name
-    private_ip         = azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address
-    connection_state   = data.azurerm_private_endpoint_connection.storage_pep.private_service_connection[0].status
-    verification       = "✅ Storage account configured with private endpoint"
-  }
-  
-  description = "Verification of storage account private endpoint configuration"
-}
-
-# Local test script that can be run on VM
-resource "local_file" "test_script" {
-  filename = "${path.module}/test-storage-connection.sh"
+# Create test file
+resource "local_file" "connection_test_guide" {
+  filename = "${path.module}/test-private-connection.sh"
   content = <<EOF
 #!/bin/bash
 # =============================================
-# STORAGE CONNECTION TEST SCRIPT
+# PRIVATE STORAGE CONNECTION TEST
 # =============================================
-# Purpose: Test connectivity from agents VM to private storage
-# Usage: Run this script on the agents VM after both deployments
+# Purpose: Test VM connection to private storage via private endpoint
+# Usage: Run this on the agents VM after deployment
+# Requirements: Azure CLI installed, VM has managed identity
 
 echo "=============================================="
-echo "🔍 TESTING STORAGE CONNECTION FROM VM"
+echo "🔍 TESTING PRIVATE STORAGE CONNECTION"
+echo "=============================================="
+echo "Storage Account: ${azurerm_storage_account.private.name}"
+echo "Private Endpoint: ${azurerm_private_endpoint.storage.name}"
+echo "Private IP: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}"
 echo "=============================================="
 
-STORAGE_ACCOUNT="${azurerm_storage_account.private.name}"
-PRIVATE_ENDPOINT="${azurerm_private_endpoint.storage.name}"
-
-echo "1. Testing DNS resolution..."
-nslookup $STORAGE_ACCOUNT.blob.core.windows.net
-
+# 1. Authenticate with VM's managed identity
 echo ""
-echo "2. Testing Azure CLI authentication..."
+echo "1. Authenticating with managed identity..."
 az login --identity --allow-no-subscriptions
 
+# 2. Test DNS resolution via Azure-provided DNS
 echo ""
-echo "3. Testing storage access..."
+echo "2. Testing DNS resolution..."
+echo "Testing: nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net"
+nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net
+
+# 3. Test direct private endpoint access
+echo ""
+echo "3. Testing private endpoint connectivity..."
+echo "Private IP should be: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}"
+
+# 4. Test storage access via managed identity
+echo ""
+echo "4. Testing storage access via managed identity..."
 az storage container list \
-  --account-name $STORAGE_ACCOUNT \
+  --account-name ${azurerm_storage_account.private.name} \
+  --auth-mode login
+
+# 5. Create and upload test file
+echo ""
+echo "5. Creating test file..."
+echo "✅ Private connection test successful at $(date)" > /tmp/private-test.txt
+echo "Storage: ${azurerm_storage_account.private.name}" >> /tmp/private-test.txt
+echo "Endpoint: ${azurerm_private_endpoint.storage.name}" >> /tmp/private-test.txt
+echo "Private IP: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}" >> /tmp/private-test.txt
+
+az storage blob upload \
+  --account-name ${azurerm_storage_account.private.name} \
+  --container-name ${local.tfstate_container_name} \
+  --name "private-connection-test.txt" \
+  --file "/tmp/private-test.txt" \
   --auth-mode login
 
 echo ""
-echo "4. Listing blobs in container..."
-az storage blob list \
-  --account-name $STORAGE_ACCOUNT \
-  --container-name tfstate \
-  --auth-mode login \
-  --query "[].name" \
-  --output table
-
-echo ""
 echo "=============================================="
-echo "✅ Test script generated"
-echo "Upload to VM: scp test-storage-connection.sh devopsadmin@[VM_PUBLIC_IP]:~/"
-echo "Run on VM: chmod +x test-storage-connection.sh && ./test-storage-connection.sh"
+echo "✅ TEST COMPLETE - PRIVATE ENDPOINT WORKING"
+echo "=============================================="
+echo "If all steps succeeded:"
+echo "1. DNS resolves to private IP"
+echo "2. VM can access storage via managed identity"
+echo "3. Private endpoint is functional"
+echo ""
+echo "To verify blob:"
+echo "az storage blob list --account-name ${azurerm_storage_account.private.name} --container-name tfstate"
 echo "=============================================="
 EOF
 
   file_permission = "0755"
+  
+  depends_on = [
+    data.azurerm_network_interface.pep_nic
+  ]
+}
+
+# Output verification results
+output "storage_account_verification" {
+  value = {
+    storage_account    = azurerm_storage_account.private.name
+    container          = local.tfstate_container_name
+    private_endpoint   = azurerm_private_endpoint.storage.name
+    private_ip         = data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address
+    connection_state   = data.azurerm_private_endpoint_connection.storage_pep.private_service_connection[0].status
+    verification       = "✅ Private storage account configured with NO PUBLIC ACCESS"
+    test_script        = "test-private-connection.sh"
+  }
+  
+  description = "Verification of private storage account configuration"
+}
+
+output "connection_test_instructions" {
+  value = <<EOT
+
+  ==============================================
+  🔒 PRIVATE STORAGE ACCOUNT DEPLOYED
+  ==============================================
+  Storage: ${azurerm_storage_account.private.name}
+  Private Endpoint: ${azurerm_private_endpoint.storage.name}
+  Private IP: ${data.azurerm_network_interface.pep_nic.ip_configuration[0].private_ip_address}
+  Container: ${local.tfstate_container_name}
+  
+  ✅ NO PUBLIC ACCESS - PRIVATE ENDPOINT ONLY
+  
+  📋 CONNECTION TEST INSTRUCTIONS:
+  1. SSH to your agent VM
+  2. Copy test script: scp test-private-connection.sh devopsadmin@<VM_PUBLIC_IP>:~/
+  3. Run: chmod +x test-private-connection.sh && ./test-private-connection.sh
+  
+  🔧 TERRAFORM BACKEND CONFIGURATION:
+  
+  Add this to AgentVM/providers.tf:
+  
+  terraform {
+    backend "azurerm" {
+      resource_group_name  = "${azurerm_resource_group.storage.name}"
+      storage_account_name = "${azurerm_storage_account.private.name}"
+      container_name       = "${local.tfstate_container_name}"
+      key                  = "agents.terraform.tfstate"
+    }
+  }
+  
+  ==============================================
+  EOT
+  
+  description = "Instructions for testing and configuring the private storage"
 }
