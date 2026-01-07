@@ -18,58 +18,55 @@ data "azurerm_subnet" "agents" {
 }
 
 # =============================================
-# OUTPUTS - STORAGE ACCOUNT
+# OUTPUTS
 # =============================================
-# Purpose: Output deployment information for integration
-# Usage: Provides values needed for agents backend configuration
+# Purpose: Show deployment results
+# Usage: Copy values for Agents Terraform backend config
 
 output "storage_account_name" {
-  value = azurerm_storage_account.private.name
+  value       = azurerm_storage_account.private.name
+  description = "Name of the private storage account"
 }
 
-output "storage_container_name" {
-  value = azurerm_storage_container.tfstate.name
+output "storage_resource_group" {
+  value       = azurerm_resource_group.storage.name
+  description = "Resource group containing the storage"
 }
 
-output "storage_resource_group_name" {
-  value = azurerm_resource_group.storage.name
+output "private_endpoint_ip" {
+  value       = azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address
+  description = "Private IP address assigned to the endpoint"
 }
 
-output "private_endpoint_id" {
-  value = azurerm_private_endpoint.storage.id
-}
-
-output "private_endpoint_private_ip" {
-  value = azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address
-}
-
-output "connection_instructions" {
-  value = <<EOF
+output "backend_config" {
+  value = <<EOT
 
   ==============================================
-  🔒 PRIVATE STORAGE ACCOUNT DEPLOYED
+  🔧 BACKEND CONFIGURATION FOR AGENTS
   ==============================================
-  Storage Account: ${azurerm_storage_account.private.name}
-  Container: ${azurerm_storage_container.tfstate.name}
-  Resource Group: ${azurerm_resource_group.storage.name}
-  Private Endpoint: ${azurerm_private_endpoint.storage.name}
   
-  📋 NEXT STEPS:
-  1. SSH into VM: ssh ${var.admin_username}@${VM_PUBLIC_IP_FROM_AGENTS_OUTPUT}
-  2. Test connection: nslookup ${azurerm_storage_account.private.name}.blob.core.windows.net
-  3. Should resolve to private IP via Azure-provided DNS
-  
-  📝 Terraform Backend Configuration:
-  Add to your agents/terraform/providers.tf:
-  
+  Add this to AgentVM/providers.tf:
+
   terraform {
     backend "azurerm" {
       resource_group_name  = "${azurerm_resource_group.storage.name}"
       storage_account_name = "${azurerm_storage_account.private.name}"
-      container_name       = "${azurerm_storage_container.tfstate.name}"
+      container_name       = "tfstate"
       key                  = "agents.terraform.tfstate"
     }
   }
+  
   ==============================================
-  EOF
+  ✅ DEPLOYMENT SUCCESSFUL
+  ==============================================
+  Storage: ${azurerm_storage_account.private.name}
+  Endpoint: ${azurerm_private_endpoint.storage.name}
+  Private IP: ${azurerm_private_endpoint.storage.private_service_connection[0].private_ip_address}
+  
+  💡 Next: Update Agents backend config and run:
+  terraform init -migrate-state
+  ==============================================
+  EOT
+  
+  description = "Instructions for configuring Terraform backend"
 }
