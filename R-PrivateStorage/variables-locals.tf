@@ -2,8 +2,7 @@
 # VARIABLES AND LOCALS - STORAGE ACCOUNT
 # =============================================
 # Purpose: Configuration for private storage account
-# Usage: Must match the agents deployment values
-# Reference: Uses same client_name, environment, location as agents
+# Usage: Must match the agents deployment values exactly
 
 # ============= INPUT VARIABLES =============
 variable "client_name" {
@@ -35,8 +34,8 @@ locals {
   workload = "ado"  # Must match AgentVM
   
   # Resource Groups
-  storage_rg  = "rg-${var.client_name}-${local.workload}-tfstate-${var.environment}-${var.location_code}-${local.sequence}"
-  network_rg  = "rg-${var.client_name}-${local.workload}-network-${var.environment}-${var.location_code}-${local.sequence}"
+  storage_rg_name = "rg-${var.client_name}-${local.workload}-tfstate-${var.environment}-${var.location_code}-${local.sequence}"
+  network_rg_name = "rg-${var.client_name}-${local.workload}-network-${var.environment}-${var.location_code}-${local.sequence}"
   
   # Storage Account (24 chars max, lowercase)
   storage_name = "st${var.client_name}${local.workload}${substr(var.environment, 0, 3)}${var.location_code}${local.sequence}"
@@ -45,10 +44,12 @@ locals {
   vnet_name   = "vnet-${var.client_name}-${local.workload}-${var.environment}-${var.location_code}-${local.sequence}"
   subnet_name = "snet-${var.client_name}-${local.workload}-${var.environment}-${var.location_code}-${local.sequence}"
   
-  # Tags
-  tags = {
-    Project = "DevOps Agents"
-    Client  = var.client_name
-    Env     = var.environment
+  # Common Tags
+  common_tags = {
+    Project     = "DevOps Agents"
+    Client      = var.client_name
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+    Component   = "storage"
   }
 }
