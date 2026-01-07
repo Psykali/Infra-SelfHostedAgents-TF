@@ -23,6 +23,31 @@ data "azurerm_network_interface" "pep_nic" {
   ]
 }
 
+# Verify container was created
+resource "null_resource" "verify_container" {
+  depends_on = [null_resource.create_container_via_private_endpoint]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "Verifying container creation..."
+      
+      STORAGE_KEY=$(az storage account keys list \
+        --resource-group ${azurerm_resource_group.storage.name} \
+        --account-name ${azurerm_storage_account.private.name} \
+        --query '[0].value' \
+        --output tsv)
+      
+      az storage container exists \
+        --name ${local.tfstate_container_name} \
+        --account-name ${azurerm_storage_account.private.name} \
+        --account-key "$STORAGE_KEY" \
+        --auth-mode key
+      
+      echo "✅ Container verification complete"
+    EOT
+  }
+}
+
 # Create test file
 resource "local_file" "connection_test_guide" {
   filename = "${path.module}/test-private-connection.sh"
