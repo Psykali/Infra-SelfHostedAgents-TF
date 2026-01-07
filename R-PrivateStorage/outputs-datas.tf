@@ -17,6 +17,13 @@ data "azurerm_subnet" "agents" {
   resource_group_name  = local.networking_rg_name
   virtual_network_name = local.vnet_name
 }
+
+data "azurerm_subnet" "private_endpoint" {
+  name                 = local.private_endpoint_subnet_name
+  virtual_network_name = local.vnet_name
+  resource_group_name  = local.networking_rg_name
+}
+
 # =============================================
 # OUTPUTS
 # =============================================
