@@ -9,8 +9,9 @@ resource "azurerm_private_endpoint" "storage" {
   name                = local.private_endpoint_name
   location            = azurerm_resource_group.storage.location
   resource_group_name = azurerm_resource_group.storage.name
-  subnet_id           = data.azurerm_subnet.private_endpoint.id
-
+#  subnet_id           = data.azurerm_subnet.private_endpoint.id
+  subnet_id = azurerm_subnet.private_endpoint.id
+  
   private_service_connection {
     name                           = local.private_endpoint_connection_name
     private_connection_resource_id = azurerm_storage_account.private.id
@@ -27,7 +28,8 @@ resource "azurerm_storage_account_network_rules" "private" {
   
   default_action = "Deny"
   
-  virtual_network_subnet_ids = [data.azurerm_subnet.private_endpoint.id]
+#  virtual_network_subnet_ids = [data.azurerm_subnet.private_endpoint.id]
+  virtual_network_subnet_ids = [azurerm_subnet.private_endpoint.id]
   
   bypass = ["AzureServices"]
   
