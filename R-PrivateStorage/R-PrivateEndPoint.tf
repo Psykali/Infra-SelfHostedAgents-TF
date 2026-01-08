@@ -27,7 +27,7 @@ resource "azurerm_storage_account_network_rules" "private" {
   
   default_action = "Deny"
   
-  virtual_network_subnet_ids = [azurerm_subnet.private_endpoint.id]
+  virtual_network_subnet_ids = [data.azurerm_subnet.private_endpoint]
   
   bypass = ["AzureServices"]
   
