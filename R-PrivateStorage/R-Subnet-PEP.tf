@@ -1,3 +1,9 @@
+# =============================================
+# SUBNET - Private Endpoint
+# =============================================
+# Purpose: Create subnet for private endpoint
+# Usage: Provides network isolation and connectivity for agents to the private storage account
+
 resource "azurerm_subnet" "private_endpoint" {
   name                 = local.private_endpoint_subnet_name
   resource_group_name  = local.networking_rg_name
