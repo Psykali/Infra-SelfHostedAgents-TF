@@ -12,4 +12,6 @@ resource "azurerm_subnet" "private_endpoint" {
 
   private_endpoint_network_policies = "Enabled"
   service_endpoints                 = ["Microsoft.Storage"]
+
+  network_security_group_id = data.azurerm_network_security_group.agents_nsg.id 
 }
