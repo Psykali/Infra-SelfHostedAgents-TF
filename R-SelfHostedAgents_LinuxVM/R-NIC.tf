@@ -24,5 +24,5 @@ resource "azurerm_network_interface" "main" {
 
 resource "azurerm_network_interface_security_group_association" "vm_nic_nsg" {
   network_interface_id      = azurerm_network_interface.main.id
-  network_security_group_id = azurerm_network_security_group.agents_nsg.id
+  network_security_group_id = azurerm_network_security_group.network_rg.id
 }
