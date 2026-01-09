@@ -17,6 +17,13 @@ data "azurerm_subnet" "agents" {
   resource_group_name  = local.networking_rg_name
   virtual_network_name = local.vnet_name
 }
+
+# Get the existing NSG
+data "azurerm_network_security_group" "agents_nsg" {
+  name                = "nsg-${var.client_name}-${local.workload_name}-${var.environment}-${var.location_code}-${local.sequence_number}"
+  resource_group_name = local.networking_rg_name
+}
+
 /*
 data "azurerm_subnet" "private_endpoint" {
   name                 = local.private_endpoint_subnet_name
