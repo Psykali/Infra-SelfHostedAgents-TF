@@ -9,7 +9,7 @@ variable "azure_devops_org_url" {
   type        = string
   sensitive   = true
   ### To Be Changed to the URL of the AzureDevOps Organisation Where The Agents Pool is Kept
-  default     = "https://dev.azure.com/bseforgedevops" 
+  default     = "" 
 }
 
 variable "azure_devops_pat" {
@@ -17,7 +17,7 @@ variable "azure_devops_pat" {
   type        = string
   sensitive   = true
   ### To Be Changed To the PAT Created for the AzureDevOps Agents to be Registered to the AzureDevOps Organisation
-  default     = "Hga16IPIP3S4xZSAV91wspYV0v8CUlNJ9wGwGLV4GccoPd1dV1LcJQQJ99CAACAAAAA2O8gkAAASAZDO2ul1"
+  default     = ""
 }
 # ============= INPUT VARIABLES =============
 variable "client_name" {
@@ -62,7 +62,7 @@ variable "agent_count" {
 variable "agent_version" {
   description = "Azure DevOps agent version"
   type        = string
-  default     = "4.261.0"
+  default     = "4.261.0" ## Verify the last agents versions on Azure Docs
 }
 
 # ============= LOCAL VALUES =============
